@@ -1,0 +1,2 @@
+<Route path="/create" element={<AddEmployee />}></Route>
+<Route path="/employeeEdit/:id" element={<EmployeeEdit />}></Route>
