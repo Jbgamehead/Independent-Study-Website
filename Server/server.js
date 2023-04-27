@@ -17,21 +17,29 @@ app.use(express.static('public'))
 /* utilities */
 function validate(body, names) {
     // for some reason, a for in loop didn't work here
-    names.forEach((name) => {
-        console.log(name)
+    for (var i = 0; i < names.length; i++) {
+        var name = names[i]
+
         var obj = body
-        for (var prop in name.split(".")) {
-            if (prop in obj) {
+
+        var splitText = name.split(".")
+        for (var i1 = 0; i1 < splitText.length; i1++) {
+            var prop = splitText[i1]
+
+            if (Object.hasOwn(obj, prop)) {
                 obj = obj[prop]
             } else {
+                // TODO: probably want to display this on the client in a nicer way
+                console.log("Invalid query received; lacking " + prop + " of " + name)
                 return false
             }
         }
-    })
+    }
     return true
 }
 
 
+/* database access */
 const con = mysql.createConnection({
     host: "localhost",
     user: "root",
@@ -60,6 +68,8 @@ con.connect((err) => {
     }
 })
 
+
+/* entry points */
 app.get('/getEmployee', (req, res) => {
     const sql = "SELECT * FROM employee"
     con.query(sql, (err, result) => {
@@ -163,8 +173,7 @@ app.get('/logout', (req, res) => {
 
 app.post('/dashboard/create', upload.single('image'), (req, res) => {
     const sql = "INSERT INTO employee (`name`,`email`,`password`,`address`,`salary`,`image`) VALUES (?)"
-//    if (req.file && req.file.filename) {
-    if (validate(req.body, ["name", "password", "email", "address", "salary", "filename"])) {
+    if (validate(req, ["body.name", "body.password", "body.email", "body.address", "body.salary", "file.filename"])) {
         bcrypt.hash(req.body.password.toString(), 10, (err, hash) => {
             if (err) return res.json({ Error: "Error wile hashing password" })
             const values = [
@@ -183,7 +192,33 @@ app.post('/dashboard/create', upload.single('image'), (req, res) => {
     }
 })
 
+
+/* calendar functions */
+app.get('/calendar/admin/get', (req, res) => {
+    const sql = "SELECT * FROM schedule WHERE end >= ? OR start >= ?"
+    const today = new Date()
+    const weekStart = new Date(/* year */ today.getFullYear(), /* month */ today.getMonth(), /* day */ today.getDate() - today.getDay())
+    const sqlParam = "STR_TO_DATE(%Y-%m-%d)"
+    con.query(sql, [sqlParam, sqlParam], (err, result) => {
+        if (err) return res.json({ Error: "Error in running query" })
+        return res.json(result)
+    })
+})
+
+app.post('/calendar/admin/add', (req, res) => {
+    console.log(req.body)
+//    const sql = "INSERT * INTO schedule"
+//    con.query(sql, [sqlParam, sqlParam], (err, result) => {
+//        if (err) return res.json({ Error: "Error in running query" })
+//        return res.json(result)
+//    })
+})
+
 app.listen(8081, () => {
     console.log("Running")
+
+    const today = new Date()
+    const weekStart = new Date(/* year */ today.getFullYear(), /* month */ today.getMonth(), /* day */ today.getDate() - today.getDay())
+    console.log("Today's week starts on " + weekStart.toISOString().substring(0, 10))
 })
 
