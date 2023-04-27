@@ -15,6 +15,7 @@ app.use(express.static('public'))
 
 
 /* utilities */
+// checks that the object has all the specified properties
 function validate(body, names) {
     // for some reason, a for in loop didn't work here
     for (var i = 0; i < names.length; i++) {
@@ -36,6 +37,14 @@ function validate(body, names) {
         }
     }
     return true
+}
+
+// gets a property if it exists
+// elsewise, returns the default
+function orDefault(obj, property, value) {
+    if (Object.hasOwn(obj, property))
+        return obj[property]
+    return value
 }
 
 
@@ -198,7 +207,7 @@ app.get('/calendar/admin/get', (req, res) => {
     const sql = "SELECT * FROM schedule WHERE end >= ? OR start >= ?"
     const today = new Date()
     const weekStart = new Date(/* year */ today.getFullYear(), /* month */ today.getMonth(), /* day */ today.getDate() - today.getDay())
-    const sqlParam = "STR_TO_DATE(%Y-%m-%d)"
+    const sqlParam = "STR_TO_DATE(?, %Y-%m-%d)" // TODO: put the date in
     con.query(sql, [sqlParam, sqlParam], (err, result) => {
         if (err) return res.json({ Error: "Error in running query" })
         return res.json(result)
@@ -207,11 +216,21 @@ app.get('/calendar/admin/get', (req, res) => {
 
 app.post('/calendar/admin/add', (req, res) => {
     console.log(req.body)
-//    const sql = "INSERT * INTO schedule"
-//    con.query(sql, [sqlParam, sqlParam], (err, result) => {
-//        if (err) return res.json({ Error: "Error in running query" })
-//        return res.json(result)
-//    })
+    const sql = "INSERT INTO `schedule` (`Event`, `Location`, `Assignee`, `Start`, `End`) VALUES (?, ?, ?, ?, ?)"
+
+    if (validate(req.body, ["name", "start", "end", "place"])) {
+        const name = req.body.name
+        const start = req.body.start // TODO: fromJson
+        const end = req.body.end // TODO: fromJson
+        const place = req.body.place // TODO: fromJson
+
+        const people = orDefault(req.body, "people", [-1])
+        const notes = orDefault(req.body, "notes", "")
+        con.query(sql, [name, start, end, place, people, notes], (err, result) => {
+            if (err) return res.json({ Error: "Error in running query" })
+            return res.json(result)
+        })
+    }
 })
 
 app.listen(8081, () => {

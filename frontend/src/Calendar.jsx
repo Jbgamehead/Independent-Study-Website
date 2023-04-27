@@ -130,6 +130,8 @@ export default class Demo extends React.PureComponent {
                     start: Utils.toJson(added.startDate),
                     end: Utils.toJson(added.endDate),
                     people: added.members,
+                    place: added.roomId,
+                    notes: added.notes,
                 }
                 sendAppointment(syncData)
             }
