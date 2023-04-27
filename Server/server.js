@@ -47,6 +47,24 @@ function orDefault(obj, property, value) {
     return value
 }
 
+function fromJson(data) {
+    return new Date(data.y, data.m, data.d, data.h, data.mi, data.s)
+}
+
+function date(dt) {
+//    function ensureLen(str) {
+//        str = str.toString()
+//        if (str.length < 2) return "0" + str
+//        return str
+//    }
+//
+//    return "TIMESTAMP(\'" +
+//        dt.getFullYear() + "-" + ensureLen(dt.getMonth()) + "-" + ensureLen(dt.getDate()) + " " +
+//        ensureLen(dt.getHours()) + ":" + ensureLen(dt.getMinutes()) + ":" + ensureLen(dt.getSeconds()) +
+//        "\')"
+    return dt.getTime()
+}
+
 
 /* database access */
 const con = mysql.createConnection({
@@ -207,10 +225,11 @@ app.get('/calendar/admin/get', (req, res) => {
     const sql = "SELECT * FROM schedule WHERE end >= ? OR start >= ?"
     const today = new Date()
     const weekStart = new Date(/* year */ today.getFullYear(), /* month */ today.getMonth(), /* day */ today.getDate() - today.getDay())
-    const sqlParam = "STR_TO_DATE(?, %Y-%m-%d)" // TODO: put the date in
+//    const sqlParam = "TIMESTAMP(\'" + weekStart.getFullYear() + "-" + weekStart.getMonth() + "-" + weekStart.getDate() + "\')"
+    const sqlParam = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate())
     con.query(sql, [sqlParam, sqlParam], (err, result) => {
         if (err) return res.json({ Error: "Error in running query" })
-        return res.json(result)
+        return res.json({Status: "Success", data: result})
     })
 })
 
@@ -220,16 +239,26 @@ app.post('/calendar/admin/add', (req, res) => {
 
     if (validate(req.body, ["name", "start", "end", "place"])) {
         const name = req.body.name
-        const start = req.body.start // TODO: fromJson
-        const end = req.body.end // TODO: fromJson
-        const place = req.body.place // TODO: fromJson
+        const start = fromJson(req.body.start)
+        const end = fromJson(req.body.end)
+        const place = req.body.place
 
         const people = orDefault(req.body, "people", [-1])
         const notes = orDefault(req.body, "notes", "")
-        con.query(sql, [name, start, end, place, people, notes], (err, result) => {
+
+        console.log(people)
+        console.log(people.toString())
+        var str = people.toString().replace(" ", "")
+        console.log(str)
+
+        console.log(date(start))
+
+        console.log(sql.replace("?", name).replace("?", place).replace("?", str).replace("?", date(start)).replace("?", date(end)))
+        con.query(sql, [name, place.toString(), str, date(start), date(end), notes], (err, result) => {
             if (err) return res.json({ Error: "Error in running query" })
-            return res.json(result)
+            return res.json({ Status: "Success" })
         })
+//        res.json({Status: "NYI"})
     }
 })
 

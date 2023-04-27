@@ -7,7 +7,7 @@ function toJson(date) {
         "m": date.getMonth(),
         "d": date.getDate(),
         "h": date.getHours(),
-        "m": date.getMinutes(),
+        "mi": date.getMinutes(),
         "s": date.getSeconds(),
         // I think seconds are pushing it on what's required for this, lol
     }
