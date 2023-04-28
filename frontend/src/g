@@ -1,2 +1,11 @@
-<Route path="/create" element={<AddEmployee />}></Route>
-<Route path="/employeeEdit/:id" element={<EmployeeEdit />}></Route>
+<div className="container shadow my-1">
+    <div className="d-flex justify-content-center align-items-center vh-100 loginPage">
+        <div className="p-10 rounded w-5 boarder loginForm">
+            <h1 className="display-6 fw-bolder mb-5">LOGIN AS</h1>
+            <div className="d-flex justify-content-around mt-1">
+                <button className='btn btn-primary'>Employee</button>
+                <button className='btn btn-warning'>Admin</button>
+            </div>
+        </div>
+    </div>
+</div>
