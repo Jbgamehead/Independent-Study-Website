@@ -6,6 +6,7 @@ import Paper from '@mui/material/Paper'
 // basic elements
 import Button from '@mui/material/Button'
 import TextField from '@mui/material/TextField'
+import LocationOn from "@mui/icons-material/LocationOn"
 import Box from '@mui/material/Box'
 
 import AppointmentContent from './calendar/admin/AppointmentContent'
@@ -38,27 +39,25 @@ import {
 } from '@mui/material/colors'
 
 const allColors = [
-    pink,
-    red,
-    deepOrange,
-    orange,
-    amber,
-    yellow,
-    lime,
-    lightGreen,
-    green,
-    teal,
-    blue,
-    lightBlue,
-    cyan,
-    indigo,
-    deepPurple,
-    purple,
-    brown,
-    // black,
-    blueGrey,
-    grey,
-    // white,
+    [pink, "pink"],
+    [red, "red"],
+    [deepOrange, "deepOrange"],
+    [orange, "orange"],
+    [amber, "amber"],
+    [yellow, "yellow"],
+    [lime, "lime"],
+    [lightGreen, "lightGreen"],
+    [green, "green"],
+    [teal, "teal"],
+    [blue, "blue"],
+    [lightBlue, "lightBlue"],
+    [cyan, "cyan"],
+    [indigo, "indigo"],
+    [deepPurple, "deepPurple"],
+    [purple, "purple"],
+    [brown, "brown"],
+    [blueGrey, "blueGrey"],
+    [grey, "grey"],
 ]
 
 
@@ -90,6 +89,7 @@ const owners = [{
     text: 'Auto',
     id: -1,
     color: indigo,
+    colorName: "indigo"
 }]
 
 // TODO: request employees from database
@@ -139,11 +139,25 @@ export default class Demo extends React.PureComponent {
             grouping: [{
                 resourceName: 'staticValue',
             }],
+
             number: 0,
-            firstRender: true
+            firstRender: true,
+
+            tooltipVisible: false,
+            appointmentMeta: {
+                target: null,
+                data: {},
+            },
         }
 
         this.commitChanges = this.commitChanges.bind(this)
+        this.toggleTooltipVisibility = () => {
+            const { tooltipVisible } = this.state
+            this.setState({ tooltipVisible: !tooltipVisible });
+        }
+        this.onAppointmentMetaChange = ({ data, target }) => {
+            this.setState({ appointmentMeta: { data, target } })
+        }
     }
 
     commitChanges({ added, changed, deleted, blockSync }) {
@@ -155,6 +169,10 @@ export default class Demo extends React.PureComponent {
         this.setState((state) => {
             let { data } = state
             if (added) {
+                if (lastAdded == added)
+                    return
+                lastAdded = added
+
                 const startingAddedId = data.length > 0 ? data[data.length - 1].id + 1 : 0;
                 data = [...data, { id: startingAddedId, ...added }]
 
@@ -186,12 +204,8 @@ export default class Demo extends React.PureComponent {
       this.setState({ currentViewName })
     }
 
-    addLocation() {
-        console.log("NYI")
-    }
-
     render() {
-        const { data, resources, grouping, currentViewName, firstRender } = this.state
+        const { data, resources, grouping, currentViewName, firstRender, tooltipVisible, appointmentMeta } = this.state
 
         if (this.state.firstRender) {
             /* run setup */
@@ -214,7 +228,8 @@ export default class Demo extends React.PureComponent {
                             resources[0].instances = ([...resources[0].instances, {
                                 text: employees[i].name,
                                 id: employees[i].id,
-                                color: allColors[i % allColors.length] // TODO: randomize color
+                                color: allColors[i % allColors.length][0],
+                                colorName: allColors[i % allColors.length][1]
                             }])
 
                             lock.done += 1
@@ -281,7 +296,8 @@ export default class Demo extends React.PureComponent {
                             var sp = entry.Assignee.split(",")
                             for (var i1 = 0; i1 < sp.length; i1++)
                                 sp[i1] = parseInt(sp[i1])
-                            sp = [-1, ...sp]
+                            if (sp.length == 0)
+                                sp = [-1, ...sp]
                             var added = {
                                 title: entry.Event,
                                 startDate: new Date(entry.Start),
@@ -317,12 +333,23 @@ export default class Demo extends React.PureComponent {
             }
         });
 
-        const content = AppointmentContent.template(this.state.data)
+        const content = AppointmentContent.template(this.state.data, (id) => {
+            for (var i = 0; i < locations.length; i++) {
+                if (locations[i].id == id) return locations[i].text
+            }
+            return "[Location not found]"
+        }, (member) => {
+            var members = this.state.resources[0].instances
+            for (var i = 0; i < members.length; i++) if (members[i].id == member) return members[i].color[300]
+            return indigo[300]
+        }, (st) => {this.setState(st)}, this.toggleTooltipVisibility, this.onAppointmentMetaChange)
 
         return (
             <body>
                 <Paper>
-                    <Scheduler data={data}>
+                    <Scheduler
+                        data={data}
+                    >
                         <EditingState
                             onCommitChanges={this.commitChanges}
                         />
@@ -330,6 +357,15 @@ export default class Demo extends React.PureComponent {
                             grouping={grouping}
                         />
 
+                        <ViewState
+                            defaultCurrentViewName="Week"
+                        />
+
+                        <WeekView
+                            startDayHour={9}
+                            endDayHour={15}
+                            intervalCount={2}
+                        />
                         <MonthView
                             startDayHour={9}
                             endDayHour={15}
@@ -345,12 +381,26 @@ export default class Demo extends React.PureComponent {
                         <IntegratedGrouping />
                         <IntegratedEditing />
 
-                        <AppointmentTooltip showOpenButton showCloseButton />
-                        <AppointmentForm />
                         <GroupingPanel />
                         <DragDropProvider />
 
-                        <Appointments appointmentContentComponent={content} />
+
+                        <Appointments appointmentContentComponent={content}/>
+                        <AppointmentTooltip
+                            showOpenButton
+                            showDeleteButton
+                            showCloseButton
+
+                            visible={tooltipVisible}
+                            onVisibilityChange={this.toggleTooltipVisibility}
+                            appointmentMeta={appointmentMeta}
+                            onAppointmentMetaChange={this.onAppointmentMetaChange}
+                         />
+
+                        <AppointmentForm />
+
+                        <Toolbar />
+                        <ViewSwitcher />
                     </Scheduler>
                 </Paper>
 
