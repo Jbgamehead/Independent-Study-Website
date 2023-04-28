@@ -32,3 +32,23 @@
     height: 40px;
     border-radius: 50%
 }
+
+.Panel {
+     padding-top: 1px;
+    padding-left: 10px;
+
+               color: white;
+    background-color: rgb(33, 37, 41);
+
+    border-color: rgb(29, 33, 37);
+    border-top-style: solid;
+    border-width: 1px;
+}
+
+.Panel > .Inner > p {
+    margin-bottom: 0px;
+}
+
+.Panel > .Inner > div > label[data-shrink="false"] {
+    color: rgba(255, 255, 255, 0.6);
+}

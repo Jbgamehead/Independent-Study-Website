@@ -92,14 +92,6 @@ con.connect((err) => {
         console.log("Error While Connecting Database")
     } else {
         console.log("Database Connected")
-
-        for (var i = 0; i < 100; i++) {
-//            const sql = "INSERT INTO `employee` (`id`, `name`, `email`, `password`, `address`, `salary`, `image`) VALUES ('" + i + "', 'u', 'u@u', 'u', 'u', '1', '');"
-//            con.query(sql, (err, result) => {
-//                console.log(result)
-//                return result
-//            })
-        }
     }
 })
 

@@ -1,5 +1,13 @@
 import * as React from 'react';
+
+// main layout
 import Paper from '@mui/material/Paper'
+
+// basic elements
+import Button from '@mui/material/Button'
+import TextField from '@mui/material/TextField'
+
+// calendar
 import {
     ViewState,
     GroupingState,
@@ -39,8 +47,8 @@ blue,
 lightBlue,
 cyan,
 indigo,
-purple,
 deepPurple,
+purple,
 brown,
 // black,
 blueGrey,
@@ -170,6 +178,10 @@ export default class Demo extends React.PureComponent {
       this.setState({ currentViewName })
     }
 
+    addLocation() {
+        console.log("NYI")
+    }
+
     render() {
         const { data, resources, grouping, currentViewName, firstRender } = this.state
 
@@ -281,11 +293,23 @@ export default class Demo extends React.PureComponent {
                 .catch(err => console.log(err));
         }
 
+        const styles = theme => ({
+            textField: {
+                width: '90%',
+                marginLeft: 'auto',
+                marginRight: 'auto',
+                paddingBottom: 0,
+                marginTop: 0,
+                fontWeight: 500
+            },
+            input: {
+                color: 'white'
+            }
+        });
+
         return (
             <Paper>
-                <Scheduler
-                    data={data}
-                >
+                <Scheduler data={data}>
                     <EditingState
                         onCommitChanges={this.commitChanges}
                     />
@@ -313,6 +337,25 @@ export default class Demo extends React.PureComponent {
                     <GroupingPanel />
                     <DragDropProvider />
                 </Scheduler>
+
+                <div class = "Panel">
+                    <div class = "Inner">
+                        <p> Add a location </p>
+                        <TextField
+                            id="standard-basic"
+                            label="Location"
+                            color="secondary"
+                            InputProps={{style:{ color: "white" } }}
+                            variant="standard"
+                        /> <Button
+                            variant="text"
+                            color="primary"
+                            onClick={addLocation}
+                            style={{ marginTop: "10px" }}
+                        > Add
+                        </Button>
+                    </div>
+                </div>
             </Paper>
         )
     }
