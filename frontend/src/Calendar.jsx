@@ -30,8 +30,7 @@ import {
     Resources,
     Appointments,
     AppointmentTooltip,
-    GroupingPanel,
-    WeekView,
+    AppointmentForm,
     DragDropProvider,
     GroupingPanel,
 } from '@devexpress/dx-react-scheduler-material-ui'
@@ -375,7 +374,7 @@ export default class Demo extends React.PureComponent {
                         <Appointments />
                         <Resources
                             data={resources}
-                            mainResourceName="members"
+                            mainResourceName="staticValue"
                         />
 
                         <IntegratedGrouping />
