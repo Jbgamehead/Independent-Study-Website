@@ -30,7 +30,8 @@ import {
     Resources,
     Appointments,
     AppointmentTooltip,
-    AppointmentForm,
+    GroupingPanel,
+    WeekView,
     DragDropProvider,
     GroupingPanel,
 } from '@devexpress/dx-react-scheduler-material-ui'
@@ -79,7 +80,7 @@ function sendAppointment(data) {
             }
         })
         .catch(err => console.log(err))
-    ;
+        ;
 }
 
 
@@ -112,7 +113,7 @@ var locks = {}
 
 function getLock(name, amount) {
     if (Object.hasOwn(locks, name)) return locks[name]
-    locks[name] = {done: 0, total: amount}
+    locks[name] = { done: 0, total: amount }
 }
 
 /* app */
@@ -201,7 +202,7 @@ export default class Demo extends React.PureComponent {
     }
 
     currentViewNameChange = (currentViewName) => {
-      this.setState({ currentViewName })
+        this.setState({ currentViewName })
     }
 
     render() {
@@ -307,7 +308,7 @@ export default class Demo extends React.PureComponent {
                                 roomId: entry.Location,
                                 staticValue: 1
                             }
-                            this.commitChanges({added: added, blockSync: true}, false)
+                            this.commitChanges({ added: added, blockSync: true }, false)
                         }
 
                         return res.data
@@ -371,11 +372,10 @@ export default class Demo extends React.PureComponent {
                             endDayHour={15}
                             intervalCount={2}
                         />
-
                         <Appointments />
                         <Resources
                             data={resources}
-                            mainResourceName="staticValue"
+                            mainResourceName="members"
                         />
 
                         <IntegratedGrouping />
@@ -411,7 +411,7 @@ export default class Demo extends React.PureComponent {
                         backgroundColor: 'rgb(33, 37, 41)',
                     }}
                 > </Box>
-                <div style={{height: "10px"}} display="block"> </div>
+                <div style={{ height: "10px" }} display="block"> </div>
                 <Box
                     class="SuggestionBox"
                     style={{
@@ -422,15 +422,15 @@ export default class Demo extends React.PureComponent {
                         padding: 5
                     }}
                 >
-                    <h6 style={{color:"white"}}> Suggestion </h6>
-                    <p style={{color:"white"}}>
-                        Employee: [name] <br/>
-                        Date: [number] <br/>
-                        Start: [time] <br/>
-                        End: [time] <br/>
+                    <h6 style={{ color: "white" }}> Suggestion </h6>
+                    <p style={{ color: "white" }}>
+                        Employee: [name] <br />
+                        Date: [number] <br />
+                        Start: [time] <br />
+                        End: [time] <br />
                     </p>
                 </Box>
-                <div style={{height: "10px"}}> </div>
+                <div style={{ height: "10px" }}> </div>
             </body>
         )
     }
