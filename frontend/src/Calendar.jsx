@@ -6,6 +6,9 @@ import Paper from '@mui/material/Paper'
 // basic elements
 import Button from '@mui/material/Button'
 import TextField from '@mui/material/TextField'
+import Box from '@mui/material/Box'
+
+// import AppointmentContent from './calendar/admin/AppointmentContent'
 
 // calendar
 import {
@@ -17,43 +20,45 @@ import {
 } from '@devexpress/dx-react-scheduler'
 import {
     Scheduler,
+
+    Toolbar,
+    MonthView,
+    WeekView,
+    ViewSwitcher,
+
     Resources,
     Appointments,
     AppointmentTooltip,
     AppointmentForm,
     DragDropProvider,
     GroupingPanel,
-    WeekView,
-    MonthView,
-    Toolbar,
-    ViewSwitcher,
 } from '@devexpress/dx-react-scheduler-material-ui'
 import {
     amber, blue, blueGrey, brown, cyan, deepOrange, deepPurple, green, grey, indigo, lightBlue, lightGreen, lime, orange, pink, purple, red, teal, yellow, common
 } from '@mui/material/colors'
 
 const allColors = [
-pink,
-red,
-deepOrange,
-orange,
-amber,
-yellow,
-lime,
-lightGreen,
-green,
-teal,
-blue,
-lightBlue,
-cyan,
-indigo,
-deepPurple,
-purple,
-brown,
-// black,
-blueGrey,
-grey,
-// white,
+    pink,
+    red,
+    deepOrange,
+    orange,
+    amber,
+    yellow,
+    lime,
+    lightGreen,
+    green,
+    teal,
+    blue,
+    lightBlue,
+    cyan,
+    indigo,
+    deepPurple,
+    purple,
+    brown,
+    // black,
+    blueGrey,
+    grey,
+    // white,
 ]
 
 
@@ -65,20 +70,17 @@ const today = new Date()
 console.log(today)
 
 
-var lastSent = {}
+var lastAdded = {}
 function sendAppointment(data) {
-    if (JSON.stringify(data) !== JSON.stringify(lastSent)) {
-        lastSent = data
-        return axios.post('http://localhost:8081/calendar/admin/add', data)
-            .then(res => {
-                if (res.data.Status !== 'Success') {
-                    // TODO: feedback
-                    console.log(res)
-                }
-            })
-            .catch(err => console.log(err))
-        ;
-    }
+    return axios.post('http://localhost:8081/calendar/admin/add', data)
+        .then(res => {
+            if (res.data.Status !== 'Success') {
+                // TODO: feedback
+                console.log(res)
+            }
+        })
+        .catch(err => console.log(err))
+    ;
 }
 
 
@@ -100,6 +102,10 @@ const locations = [
 // TODO: probably should put this onto the database
 
 
+const staticValue = [
+    { text: "default", id: 1, color: indigo }
+]
+
 var sentRequest = false
 var unlocked = false
 var locks = {}
@@ -119,17 +125,20 @@ export default class Demo extends React.PureComponent {
                 fieldName: 'members',
                 title: 'Members',
                 instances: owners,
+                default: -1,
                 allowMultiple: true,
             }, {
                 fieldName: 'roomId',
                 title: 'Location',
                 instances: locations,
+            }, {
+                fieldName: 'staticValue',
+                title: 'staticValue',
+                instances: staticValue
             }],
             grouping: [{
-                resourceName: 'members',
+                resourceName: 'staticValue',
             }],
-            groupByDate: "Week",
-            isGroupByDate: true,
             number: 0,
             firstRender: true
         }
@@ -144,7 +153,6 @@ export default class Demo extends React.PureComponent {
             }
         }
         this.setState((state) => {
-            console.log(added)
             let { data } = state
             if (added) {
                 const startingAddedId = data.length > 0 ? data[data.length - 1].id + 1 : 0;
@@ -264,6 +272,7 @@ export default class Demo extends React.PureComponent {
                     if (res.data.Status === 'Success') {
                         var data = res.data.data
 
+                        if (this.state.data.length != 0) return
 
                         for (var i = 0; i < data.length; i++) {
                             var entry = data[i]
@@ -280,6 +289,7 @@ export default class Demo extends React.PureComponent {
                                 allDay: false,
                                 members: sp,
                                 roomId: entry.Location,
+                                staticValue: 1
                             }
                             this.commitChanges({added: added, blockSync: true}, false)
                         }
@@ -308,55 +318,67 @@ export default class Demo extends React.PureComponent {
         });
 
         return (
-            <Paper>
-                <Scheduler data={data}>
-                    <EditingState
-                        onCommitChanges={this.commitChanges}
-                    />
-                    <GroupingState
-                        grouping={grouping}
-                    />
+            <body>
+                <Paper>
+                    <Scheduler data={data}>
+                        <EditingState
+                            onCommitChanges={this.commitChanges}
+                        />
+                        <GroupingState
+                            grouping={grouping}
+                        />
 
-                    <WeekView
-                        startDayHour={9}
-                        endDayHour={15}
-                        intervalCount={2}
-                    />
+                        <MonthView
+                            startDayHour={9}
+                            endDayHour={15}
+                            intervalCount={2}
+                        />
 
-                    <Appointments />
-                    <Resources
-                        data={resources}
-                        mainResourceName="members"
-                    />
+                        <Appointments />
+                        <Resources
+                            data={resources}
+                            mainResourceName="staticValue"
+                        />
 
-                    <IntegratedGrouping />
-                    <IntegratedEditing />
+                        <IntegratedGrouping />
+                        <IntegratedEditing />
 
-                    <AppointmentTooltip showOpenButton showCloseButton />
-                    <AppointmentForm />
-                    <GroupingPanel />
-                    <DragDropProvider />
-                </Scheduler>
+                        <AppointmentTooltip showOpenButton showCloseButton />
+                        <AppointmentForm />
+                        <GroupingPanel />
+                        <DragDropProvider />
 
-                <div class = "Panel">
-                    <div class = "Inner">
-                        <p> Add a location </p>
-                        <TextField
-                            id="standard-basic"
-                            label="Location"
-                            color="secondary"
-                            InputProps={{style:{ color: "white" } }}
-                            variant="standard"
-                        /> <Button
-                            variant="text"
-                            color="primary"
-                            onClick={addLocation}
-                            style={{ marginTop: "10px" }}
-                        > Add
-                        </Button>
-                    </div>
-                </div>
-            </Paper>
+                    </Scheduler>
+                </Paper>
+
+                <Box
+                    sx={{
+                        width: "100%",
+                        height: 2,
+                        backgroundColor: 'rgb(33, 37, 41)',
+                    }}
+                > </Box>
+                <div style={{height: "10px"}} display="block"> </div>
+                <Box
+                    class="SuggestionBox"
+                    style={{
+                        width: 300,
+                        height: 200,
+                        margin: "auto",
+                        backgroundColor: 'rgb(33, 37, 41)',
+                        padding: 5
+                    }}
+                >
+                    <h6 style={{color:"white"}}> Suggestion </h6>
+                    <p style={{color:"white"}}>
+                        Employee: [name] <br/>
+                        Date: [number] <br/>
+                        Start: [time] <br/>
+                        End: [time] <br/>
+                    </p>
+                </Box>
+                <div style={{height: "10px"}}> </div>
+            </body>
         )
     }
 }

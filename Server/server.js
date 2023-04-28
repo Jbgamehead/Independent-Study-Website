@@ -52,16 +52,6 @@ function fromJson(data) {
 }
 
 function date(dt) {
-//    function ensureLen(str) {
-//        str = str.toString()
-//        if (str.length < 2) return "0" + str
-//        return str
-//    }
-//
-//    return "TIMESTAMP(\'" +
-//        dt.getFullYear() + "-" + ensureLen(dt.getMonth()) + "-" + ensureLen(dt.getDate()) + " " +
-//        ensureLen(dt.getHours()) + ":" + ensureLen(dt.getMinutes()) + ":" + ensureLen(dt.getSeconds()) +
-//        "\')"
     return dt.getTime()
 }
 
@@ -141,7 +131,7 @@ app.delete('/delete/:id', (req, res) => {
 app.get('/adminCount', (req, res) => {
     const sql = "Select count(id) as admin from users"
     con.query(sql, (err, result) => {
-        if (err) return res.json({ Error: "Error in running query" })
+        if (err) return res.json({ Error: "Error running query" })
         return res.json(result)
     })
 })
@@ -149,7 +139,7 @@ app.get('/adminCount', (req, res) => {
 app.get('/employeeCount', (req, res) => {
     const sql = "Select count(id) as employee from employee"
     con.query(sql, (err, result) => {
-        if (err) return res.json({ Error: "Error in running query" })
+        if (err) return res.json({ Error: "Error running query" })
         return res.json(result)
     })
 })
@@ -157,7 +147,7 @@ app.get('/employeeCount', (req, res) => {
 app.get('/salary', (req, res) => {
     const sql = "Select sum(salary) as sumOfSalary from employee"
     con.query(sql, (err, result) => {
-        if (err) return res.json({ Error: "Error in running query" })
+        if (err) return res.json({ Error: "Error running query" })
         return res.json(result)
     })
 })
@@ -166,7 +156,7 @@ app.post('/login', (req, res) => {
     const sql = "SELECT * FROM users WHERE email = ? AND password = ? "
     if (validate(req.body, ["email", "password"])) {
         con.query(sql, [req.body.email, req.body.password], (err, result) => {
-            if (err) return res.json({ Status: "Error", Error: "Error in running query" })
+            if (err) return res.json({ Status: "Error", Error: "Error running query" })
             if (result.length > 0) {
                 return res.json({ Status: "Success" })
             } else {
@@ -180,7 +170,7 @@ app.post('/employeelogin', (req, res) => {
     const sql = "SELECT * FROM employee WHERE email = ?"
     if (validate(req.body, ["email", "password"])) {
         con.query(sql, [req.body.email, req.body.password], (err, result) => {
-            if (err) return res.json({ Status: "Error", Error: "Error in running query" })
+            if (err) return res.json({ Status: "Error", Error: "Error running query" })
             if (result.length > 0) {
                 bcrypt.compare(req.body.password.toString(), result[0].password, (err, response) => {
                     if (err) return res.json({ Error: "password error" })
@@ -228,7 +218,7 @@ app.get('/calendar/admin/get', (req, res) => {
 //    const sqlParam = "TIMESTAMP(\'" + weekStart.getFullYear() + "-" + weekStart.getMonth() + "-" + weekStart.getDate() + "\')"
     const sqlParam = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate())
     con.query(sql, [sqlParam, sqlParam], (err, result) => {
-        if (err) return res.json({ Error: "Error in running query" })
+        if (err) return res.json({ Error: "Error running query" })
         return res.json({Status: "Success", data: result})
     })
 })
@@ -255,7 +245,7 @@ app.post('/calendar/admin/add', (req, res) => {
 
         console.log(sql.replace("?", name).replace("?", place).replace("?", str).replace("?", date(start)).replace("?", date(end)))
         con.query(sql, [name, place.toString(), str, date(start), date(end), notes], (err, result) => {
-            if (err) return res.json({ Error: "Error in running query" })
+            if (err) return res.json({ Error: "Error running query" })
             return res.json({ Status: "Success" })
         })
 //        res.json({Status: "NYI"})
