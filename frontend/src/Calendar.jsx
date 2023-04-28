@@ -21,9 +21,33 @@ import {
     ViewSwitcher,
 } from '@devexpress/dx-react-scheduler-material-ui'
 import {
-    teal,
-    indigo,
+    amber, blue, blueGrey, brown, cyan, deepOrange, deepPurple, green, grey, indigo, lightBlue, lightGreen, lime, orange, pink, purple, red, teal, yellow, common
 } from '@mui/material/colors'
+
+const allColors = [
+pink,
+red,
+deepOrange,
+orange,
+amber,
+yellow,
+lime,
+lightGreen,
+green,
+teal,
+blue,
+lightBlue,
+cyan,
+indigo,
+purple,
+deepPurple,
+brown,
+// black,
+blueGrey,
+grey,
+// white,
+]
+
 
 import axios from 'axios'
 
@@ -170,7 +194,7 @@ export default class Demo extends React.PureComponent {
                             resources[0].instances = ([...resources[0].instances, {
                                 text: employees[i].name,
                                 id: employees[i].id,
-                                color: teal // TODO: randomize color
+                                color: allColors[i % allColors.length] // TODO: randomize color
                             }])
 
                             lock.done += 1
