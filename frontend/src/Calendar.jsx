@@ -9,7 +9,7 @@ import {
     Appointments,
     AppointmentTooltip,
     GroupingPanel,
-    WeekView,
+    MonthView,
     DragDropProvider,
     AppointmentForm,
 } from '@devexpress/dx-react-scheduler-material-ui';
@@ -123,7 +123,7 @@ export default class Demo extends React.PureComponent {
                         grouping={grouping}
                     />
 
-                    <WeekView
+                    <MonthView
                         startDayHour={9}
                         endDayHour={15}
                         intervalCount={2}

@@ -19,7 +19,7 @@ function EmployeeLogin() {
             .then(res => {
                 if (res.data.Status === 'Success') {
                     const id = res.data.id;
-                    navigate('/employeedetail/' + id);
+                    navigate('/employeedashboard/');
                 } else {
                     setError(res.data.Error);
                 }
