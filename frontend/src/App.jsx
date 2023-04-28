@@ -15,6 +15,7 @@ import EmployeeEdit from './employeeEdit'
 import Start from './Start'
 import EmployeeLogin from './EmployeeLogin'
 import EmployeeDetail from './EmployeeDetail'
+import EmployeeDashboard from './EmployeeDashboard'
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
         <Route path='/login' element={<Login />} />
         <Route path='/employeelogin' element={<EmployeeLogin />} />
         <Route path='/employeedetail/:id' element={<EmployeeDetail />} />
+        <Route path='/employeedashboard' element={<EmployeeDashboard />} />
         <Route path='/start' element={<Start />} />
         <Route path="/dashboard" element={<Dashboard />}>
           <Route path="/dashboard/dashhome" element={<Dashhome />} />
