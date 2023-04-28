@@ -8,7 +8,7 @@ import Button from '@mui/material/Button'
 import TextField from '@mui/material/TextField'
 import Box from '@mui/material/Box'
 
-// import AppointmentContent from './calendar/admin/AppointmentContent'
+import AppointmentContent from './calendar/admin/AppointmentContent'
 
 // calendar
 import {
@@ -317,6 +317,8 @@ export default class Demo extends React.PureComponent {
             }
         });
 
+        const content = AppointmentContent.template(this.state.data)
+
         return (
             <body>
                 <Paper>
@@ -348,6 +350,7 @@ export default class Demo extends React.PureComponent {
                         <GroupingPanel />
                         <DragDropProvider />
 
+                        <Appointments appointmentContentComponent={content} />
                     </Scheduler>
                 </Paper>
 
