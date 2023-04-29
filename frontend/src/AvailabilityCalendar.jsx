@@ -134,8 +134,7 @@ export default class Demo extends React.PureComponent {
             }, {
                 fieldName: 'staticValue',
                 title: 'staticValue',
-                instances: staticValue,
-                readonly: true
+                instances: staticValue
             }],
             grouping: [{
                 resourceName: 'staticValue',
@@ -163,21 +162,10 @@ export default class Demo extends React.PureComponent {
 
     commitChanges({ added, changed, deleted, blockSync }) {
         if (added && !blockSync) {
-            if (added.members[0] == -1 && added.members.length == 1) {
-                console.log(added.members)
-                added.isGhost = true
-
-                this.setState((state) => {
-                    let { data } = state
-                    const startingAddedId = data.length > 0 ? data[data.length - 1].id + 1 : 0;
-                    data = [...data, { id: startingAddedId, ...added }]
-                    return { data }
-                })
-
+            if (added.members[0] == -1 && added.members.length == 0) {
                 return
             }
         }
-
         this.setState((state) => {
             if (lastChanged == added)
                 return
@@ -210,6 +198,10 @@ export default class Demo extends React.PureComponent {
 
             return { data }
         })
+    }
+
+    currentViewNameChange = (currentViewName) => {
+        this.setState({ currentViewName })
     }
 
     render() {
@@ -313,7 +305,6 @@ export default class Demo extends React.PureComponent {
                                 allDay: false,
                                 members: sp,
                                 roomId: entry.Location,
-                                notes: entry.Notes,
                                 staticValue: 1
                             }
                             this.commitChanges({ added: added, blockSync: true }, false)
@@ -343,12 +334,10 @@ export default class Demo extends React.PureComponent {
         });
 
         const content = AppointmentContent.template(this.state.data, (id) => {
-            for (var i = 0; i < locations.length; i++) if (locations[i].id == id) return locations[i].text
-            return "unknown"
-        }, (member) => {
-            var members = this.state.resources[0].instances
-            for (var i = 0; i < members.length; i++) if (members[i].id == member) return members[i].text
-            return indigo[300]
+            for (var i = 0; i < locations.length; i++) {
+                if (locations[i].id == id) return locations[i].text
+            }
+            return "[Location not found]"
         }, (member) => {
             var members = this.state.resources[0].instances
             for (var i = 0; i < members.length; i++) if (members[i].id == member) return members[i].color[300]
@@ -402,8 +391,9 @@ export default class Demo extends React.PureComponent {
                             showCloseButton
 
                             visible={tooltipVisible}
-                            appointmentMeta={appointmentMeta}
                             onVisibilityChange={this.toggleTooltipVisibility}
+                            appointmentMeta={appointmentMeta}
+                            onAppointmentMetaChange={this.onAppointmentMetaChange}
                          />
 
                         <AppointmentForm />
@@ -439,6 +429,7 @@ export default class Demo extends React.PureComponent {
                         End: [time] <br />
                     </p>
                 </Box>
+                <div style={{ height: "10px" }}> </div>
             </body>
         )
     }

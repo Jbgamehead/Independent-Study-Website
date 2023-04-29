@@ -13,7 +13,7 @@ const classes = {
 
 function template(
     appointments,
-    roomMapper, colorGetter,
+    roomMapper, employeeMapper, colorGetter,
     setState,
     toggleTooltipVisibility, onAppointmentMetaChange
 ) {
@@ -32,7 +32,6 @@ function template(
         backgroundColor: "rgb(33, 37, 41)",
         padding: "2px",
         borderRadius: "3px",
-        margin: "0px",
         lineHeight: 1,
         whiteSpace: "pre-wrap",
         overflow: "hidden",
@@ -57,8 +56,30 @@ function template(
     }));
 
     const AppointmentContent = ({ data, formatDate, ...restProps }) => {
-        const string = colorGetter(data.members[0])
+        var string = colorGetter(data.members[0])
         const color = { backgroundColor: string, height: "100%", padding: "0px" }
+
+        var title = data.title
+        var inf = <div/>
+        var body = <div className={classes.textContainer}>
+                       <div className={classes.text}>{roomMapper(data.roomId)}</div>
+
+                       <div className={classes.time}>
+                           {formatDate(data.startDate, { hour: "numeric", minute: "numeric" })}
+                       </div>
+                       <div className={classes.time}>{" - "}</div>
+                       <div className={classes.time}>
+                           {formatDate(data.endDate, { hour: "numeric", minute: "numeric" })}
+                       </div>
+                   </div>
+        if (data.isGhost) {
+            body = <div/>
+            inf = <div>
+                    {data.members.map((id, index) => {
+                        return <p> {employeeMapper(id)} </p>
+                    })}
+                </div>
+        }
 
         return (
             <StyledAppointmentsAppointmentContent
@@ -66,25 +87,17 @@ function template(
                 formatDate={formatDate}
                 data={data}
 
-                toggleVisibility={toggleTooltipVisibility}
-                onAppointmentMetaChange={onAppointmentMetaChange}
-
                 style={color}
+
+                onClick={function(e) {
+                    onAppointmentMetaChange({data, target: this})
+                }}
             >
-                <div display="box" style={{paddingLeft: 5, paddingRight: 5}}>
-                    <div className={classes.title}> {data.title} </div>
+                <div display="box" style={{paddingLeft: 5, paddingBottom: 5, paddingRight: 5}}>
+                    <div className={classes.title}> {title} </div>
+                    {inf}
 
-                    <div className={classes.textContainer}>
-                        <div className={classes.text}>{roomMapper(data.roomId)}</div>
-
-                        <div className={classes.time}>
-                            {formatDate(data.startDate, { hour: "numeric", minute: "numeric" })}
-                        </div>
-                        <div className={classes.time}>{" - "}</div>
-                        <div className={classes.time}>
-                            {formatDate(data.endDate, { hour: "numeric", minute: "numeric" })}
-                        </div>
-                    </div>
+                    {body}
                 </div>
             </StyledAppointmentsAppointmentContent>
         );

@@ -223,27 +223,38 @@ app.get('/calendar/admin/get', (req, res) => {
     })
 })
 
-app.post('/calendar/admin/add', (req, res) => {
-    console.log(req.body)
-    const sql = "INSERT INTO `schedule` (`Event`, `Location`, `Assignee`, `Start`, `End`) VALUES (?, ?, ?, ?, ?)"
+app.delete('/calendar/admin', (req, res) => {
+    const sql = "DELETE * FROM `schedule` WHERE (`Event`, `Location`, `Assignee`, `Start`, `End`) VALUES (?, ?, ?, ?, ?);"
 
-    if (validate(req.body, ["name", "start", "end", "place"])) {
+    if (validate(req.body, ["name", "start", "end", "place", "people"])) {
+    }
+})
+
+app.post('/calendar/admin/add', (req, res) => {
+    const sql = "INSERT INTO `schedule` (`Event`, `Location`, `Assignee`, `Start`, `End`, `Notes`) VALUES (?, ?, ?, ?, ?, ?)"
+
+    if (validate(req.body, ["name", "start", "end", "place", "people"])) {
         const name = req.body.name
         const start = fromJson(req.body.start)
         const end = fromJson(req.body.end)
         const place = req.body.place
 
-        const people = orDefault(req.body, "people", [-1])
+        const people = req.body.people
+        for (var i = 0; i < people.length; i++) {
+            if (people[i] == -1) {
+                array.splice(i, 1)
+            }
+        }
+
+        if (people.length < 1) {
+            console.log("Invalid request; no employees are assigned")
+            return
+        }
+
         const notes = orDefault(req.body, "notes", "")
 
-        console.log(people)
-        console.log(people.toString())
         var str = people.toString().replace(" ", "")
-        console.log(str)
 
-        console.log(date(start))
-
-        console.log(sql.replace("?", name).replace("?", place).replace("?", str).replace("?", date(start)).replace("?", date(end)))
         con.query(sql, [name, place.toString(), str, date(start), date(end), notes], (err, result) => {
             if (err) return res.json({ Error: "Error running query" })
             return res.json({ Status: "Success" })
@@ -259,4 +270,3 @@ app.listen(8081, () => {
     const weekStart = new Date(/* year */ today.getFullYear(), /* month */ today.getMonth(), /* day */ today.getDate() - today.getDay())
     console.log("Today's week starts on " + weekStart.toISOString().substring(0, 10))
 })
-
