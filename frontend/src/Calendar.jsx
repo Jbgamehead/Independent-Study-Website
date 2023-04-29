@@ -38,6 +38,10 @@ import {
     amber, blue, blueGrey, brown, cyan, deepOrange, deepPurple, green, grey, indigo, lightBlue, lightGreen, lime, orange, pink, purple, red, teal, yellow, common
 } from '@mui/material/colors'
 
+import schedule from "./suggest/schedule.js"
+
+
+
 const allColors = [
     [pink, "pink"],
     [red, "red"],
@@ -109,7 +113,6 @@ const owners = [{
     colorName: "indigo"
 }]
 
-// TODO: request employees from database
 
 
 const locations = [
@@ -308,6 +311,7 @@ export default class Demo extends React.PureComponent {
 
             /* run setup */
             getLock("people", 1)
+            getLock("table", 1)
 
             /* add employees */
             axios.get('http://localhost:8081/getEmployee')
@@ -336,6 +340,48 @@ export default class Demo extends React.PureComponent {
                         this.setState((state) => {
                             return { resources, number: state.number + 1 }
                         })
+
+                        return res.data
+                    } else {
+                        // TODO: display error
+                        console.log(res)
+                    }
+                })
+                .catch(err => console.log(err));
+
+            /* get schedule data */
+            axios.get('http://localhost:8081/calendar/admin/get')
+                .then(res => {
+                    if (res.data.Status === 'Success') {
+                        var data = res.data.data
+
+                        if (this.state.data.length != 0) return
+
+                        var lock = getLock("table", 1)
+                        if (data.length == 0) lock.done += 1
+                        lock.total = data.length
+
+                        for (var i = 0; i < data.length; i++) {
+                            var entry = data[i]
+
+                            var sp = entry.Assignee.split(",")
+                            for (var i1 = 0; i1 < sp.length; i1++)
+                                sp[i1] = parseInt(sp[i1])
+                            if (sp.length == 0)
+                                sp = [-1, ...sp]
+                            var added = {
+                                title: entry.Event,
+                                startDate: new Date(entry.Start),
+                                endDate: new Date(entry.End),
+                                allDay: false,
+                                members: sp,
+                                roomId: entry.Location,
+                                notes: entry.Notes,
+                                owner: 1
+                            }
+                            this.commitChanges({ added: added, blockSync: true }, false)
+                            lock.done += 1
+                        }
 
                         return res.data
                     } else {
@@ -376,43 +422,6 @@ export default class Demo extends React.PureComponent {
             }
 
             unlocked = true
-
-            /* get schedule data */
-            axios.get('http://localhost:8081/calendar/admin/get')
-                .then(res => {
-                    if (res.data.Status === 'Success') {
-                        var data = res.data.data
-
-                        if (this.state.data.length != 0) return
-
-                        for (var i = 0; i < data.length; i++) {
-                            var entry = data[i]
-
-                            var sp = entry.Assignee.split(",")
-                            for (var i1 = 0; i1 < sp.length; i1++)
-                                sp[i1] = parseInt(sp[i1])
-                            if (sp.length == 0)
-                                sp = [-1, ...sp]
-                            var added = {
-                                title: entry.Event,
-                                startDate: new Date(entry.Start),
-                                endDate: new Date(entry.End),
-                                allDay: false,
-                                members: sp,
-                                roomId: entry.Location,
-                                notes: entry.Notes,
-                                owner: 1
-                            }
-                            this.commitChanges({ added: added, blockSync: true }, false)
-                        }
-
-                        return res.data
-                    } else {
-                        // TODO: display error
-                        console.log(res)
-                    }
-                })
-                .catch(err => console.log(err));
         }
 
         const styles = theme => ({
