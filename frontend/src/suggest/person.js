@@ -1,19 +1,20 @@
 import time from "./time.js"
 
+function ensureLen(str) {str = str.toString();if (str.length < 2) return "0" + str; return str}
+function timeToString(tm) {return time.day(tm) + " " + ensureLen(time.hour(tm)) + ":" + ensureLen(time.minute(tm))}
+
 export class Opening {
     isOpen(/*long*/ start, /*long*/ end) {
-        start %= time.WEEK_LEN;
-        end %= time.WEEK_LEN;
-
         return this.start <= start && this.end >= end;
     }
 
     getValid(/*long*/ target, /*long*/ duration) {
-        if (isOpen(target % Time.WEEK_LEN, duration + start)) return target;
-        if (isOpen(end - duration, end)) {
-            var offset = start - (target % Time.WEEK_LEN);
-            var v0 = offset + (end - duration); // first available time from end
-            var v1 = start + Time.dayLong(target); // first available time from start
+        if (this.isOpen(target, duration + target))
+            return target;
+        if (this.isOpen(this.end - duration, this.end)) {
+            var v0 = this.start
+            var v1 = this.end - duration
+
             if (Math.abs(v0 - target) < Math.abs(v1 - target))
                 return v0;
             return v1;
@@ -30,29 +31,38 @@ export class Opening {
         this.start = time.getTime(day, timeStart);
         this.end = time.getTime(day, timeEnd);
     }
+
+    toString() {
+        var json = {
+            start: timeToString(this.start),
+            end: timeToString(this.end)
+        }
+        return JSON.stringify(json)
+    }
 }
 
 export class Person {
-    constructor(/*Opening[]*/ availability) {
+    constructor(id, /*Opening[]*/ availability) {
+        this.id = id
         this.availability = availability
         this.scheduledFor = []
     }
 
     timeSinceSchedule(/*long*/ cTime) {
-        var min = Long.MAX_VALUE
-        for (var i = 0; i < scheduledFor.length; i++) {
-            var cTime = scheduledFor[i]
+        var min = Number.MAX_VALUE
+        for (var i = 0; i < this.scheduledFor.length; i++) {
+            var cTime = this.scheduledFor[i]
             min = Math.min(Math.abs(cTime - l), min)
         }
         return min
     }
 
     closestTime(/*long*/ target, /*long*/ duration) {
-        var delta = Long.MAX_VALUE;
+        var delta = Number.MAX_VALUE;
         var best = -1;
 
-        for (var i = 0; i < availability.length; i++) {
-            var opening = availability[i]
+        for (var i = 0; i < this.availability.length; i++) {
+            var opening = this.availability[i]
 
             var valid = opening.getValid(target, duration);
             if (valid == -1) continue;
@@ -68,37 +78,36 @@ export class Person {
     }
 
     isOpen(/*long*/ start, /*long*/ end) {
-        for (var i = 0; i < availability.length; i++)
-            if (availability[i].isOpen(start, end))
+        for (var i = 0; i < this.availability.length; i++)
+            if (this.availability[i].isOpen(start, end))
                 return true;
         return false;
     }
 
     canOpen(/*long*/ duration) {
-        for (var i = 0; i < availability.length; i++)
-            if (availability[i].isOpen(opening.start, opening.start + duration))
-                return true;
+        for (var i = 0; i < this.availability.length; i++) {
+            var opening = this.availability[i]
+            if (opening.isOpen(opening.start, opening.start + duration))
+                return true
+        }
         return false;
     }
 
     schedule(/*long*/ v) {
         var scheduledNumbers = []
-        var current = new Date();
-        var time = current.getTime() - Time.WEEK_LEN;
         scheduledNumbers.push(v);
 
-        for (var i = 0; i < scheduledFor.length; i++) {
-            var l = scheduledFor[i]
-            if (l < time) continue;
+        for (var i = 0; i < this.scheduledFor.length; i++) {
+            var l = this.scheduledFor[i]
             scheduledNumbers.push(l);
         }
-        scheduledFor = values;
+        this.scheduledFor = scheduledNumbers;
     }
 
     closestExisting(/*long*/ target) {
-        var delta = Long.MAX_VALUE;
-        for (var i = 0; i < scheduledFor.length; i++)
-            delta = Math.min(delta, Math.abs(scheduledFor[i] - target));
+        var delta = Number.MAX_VALUE;
+        for (var i = 0; i < this.scheduledFor.length; i++)
+            delta = Math.min(delta, Math.abs(this.scheduledFor[i] - target));
         return delta;
     }
 }

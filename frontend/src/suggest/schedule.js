@@ -4,13 +4,13 @@ import Person from "./person.js"
 import time from "./time.js"
 
 
-function /*long*/ calcAltMethod(/*long*/ target, /*long*/ duration, /*Person*/ person) {
-    return person.closestExisting(target);
+function /*long*/ calcAltMethod(/*long*/ trueTarget, /*long*/ target, /*long*/ duration, /*Person*/ person) {
+    return person.closestExisting(trueTarget);
 }
 
-function /*Pair<Person, Long>*/ schedule(/*long*/ target, /*long*/ duration, /*List<Person>*/ people) {
+function /*Pair<Person, Long>*/ schedule(/*long*/ trueTarget, /*long*/ target, /*long*/ duration, /*List<Person>*/ people) {
     var altMetric = false;
-    var bestRating = Long.MAX_VALUE;
+    var bestRating = Number.MAX_VALUE;
     var bestPerson = null;
     var timeSched = 0;
 
@@ -18,7 +18,7 @@ function /*Pair<Person, Long>*/ schedule(/*long*/ target, /*long*/ duration, /*L
         var person = people[personIndex]
 
 
-        var rating = Long.MAX_VALUE;
+        var rating = Number.MAX_VALUE;
         var valid = -1;
 
         if (person.canOpen(duration)) {
@@ -27,10 +27,10 @@ function /*Pair<Person, Long>*/ schedule(/*long*/ target, /*long*/ duration, /*L
         }
         if (altMetric) {
             if (rating > duration) continue;
-            rating = calcAltMethod(target, duration, person);
+            rating = calcAltMethod(trueTarget, target, duration, person);
         } else if (rating <= duration) {
             altMetric = true;
-            rating = calcAltMethod(target, duration, person);
+            rating = calcAltMethod(trueTarget, target, duration, person);
 
             bestRating = rating;
             bestPerson = person;
@@ -47,8 +47,8 @@ function /*Pair<Person, Long>*/ schedule(/*long*/ target, /*long*/ duration, /*L
                 continue;
             }
 
-            var alt0 = calcAltMethod(target, duration, bestPerson);
-            var alt1 = calcAltMethod(target, duration, person);
+            var alt0 = calcAltMethod(trueTarget, target, duration, bestPerson);
+            var alt1 = calcAltMethod(trueTarget, target, duration, person);
             if (alt1 > alt0) {
                 bestPerson = person;
                 timeSched = valid;
@@ -56,7 +56,7 @@ function /*Pair<Person, Long>*/ schedule(/*long*/ target, /*long*/ duration, /*L
         }
     }
 
-    return new Pair(bestPerson, timeSched);
+    return new Pair.Pair(bestPerson, timeSched);
 }
 
 export default {

@@ -1,21 +1,22 @@
-let /*long*/ DAY_LEN = ((((((24) * 60)) * 60)) * 1000);
-let /*long*/ HOUR_LEN = (((((60)) * 60)) * 1000);
-let /*long*/ MINUTE_LEN = (((60)) * 1000);
-let /*long*/ WEEK_LEN = DAY_LEN * 7;
+export let /*long*/ DAY_LEN = ((((((24) * 60)) * 60)) * 1000);
+export let /*long*/ HOUR_LEN = (((((60)) * 60)) * 1000);
+export let /*long*/ MINUTE_LEN = (((60)) * 1000);
+export let /*long*/ WEEK_LEN = DAY_LEN * 7;
 
-function /*long*/ day(/*long*/ time) {
-    return time / DAY_LEN;
+export function /*long*/ day(/*long*/ time) {
+    return Math.floor(time / DAY_LEN);
 }
 
-function /*long*/ dayOfWeek(/*long*/ time) {
-    return (time / DAY_LEN) % 7;
+export function /*long*/ dayOfWeek(/*long*/ time) {
+    return Math.floor(time / DAY_LEN) % 7;
+//    return new Date(time).getDay();
 }
 
-function /*long*/ from(/*int*/ hours, /*int*/ minutes) {
+export function /*long*/ from(/*int*/ hours, /*int*/ minutes) {
     return ((((((hours) * 60) + minutes) * 60)) * 1000);
 }
 
-function /*long*/ getTime(/*String*/ day, /*long*/ time) {
+export function /*long*/ getTime(/*String*/ day, /*long*/ time) {
     var v = time;
     switch (day.toLowerCase()) {
         case "monday":
@@ -42,53 +43,64 @@ function /*long*/ getTime(/*String*/ day, /*long*/ time) {
     return v;
 }
 
-function /*long*/ hour(/*long*/ v) {
-    return (v / HOUR_LEN) % 24;
+export function timeInWeek(value) {
+    var dt = new Date(value)
+    var day = dt.getDay()
+    var hours = dt.getHours()
+    var minutes = dt.getMinutes()
+    return day * DAY_LEN + hours + HOUR_LEN + minutes * MINUTE_LEN
+//    return value % WEEK_LEN
 }
 
-function /*long*/ minute(/*long*/ v) {
-    return (v / MINUTE_LEN) % 60;
+export function /*long*/ hour(/*long*/ v) {
+    return Math.floor(v / HOUR_LEN) % 24;
+//    return new Date(v).getHours();
 }
 
-function /*String*/ time(/*long*/ v) {
-    var min = String.valueOf(minute(v));
-    if (min.length() == 1) min = "0" + min.toString();
-    var day = "null"
+export function /*long*/ minute(/*long*/ v) {
+    return Math.floor(v / MINUTE_LEN) % 60;
+//    return new Date(v).getMinutes();
+}
+
+export function /*String*/ time(/*long*/ v) {
+    var minu = minute(v).toString();
+    if (minu.length == 1) minu = "0" + minu.toString();
+    var dayStr = "null"
     switch (dayOfWeek(v)) {
         case 0:
-            day = "sunday";
-            break
+            dayStr = "sunday";
+            break;
         case 1:
-            day = "monday";
-            break
+            dayStr = "monday";
+            break;
         case 2:
-            day = "tuesday";
-            break
+            dayStr = "tuesday";
+            break;
         case 3:
-            day = "wednesday";
-            break
+            dayStr = "wednesday";
+            break;
         case 4:
-            day = "thursday";
-            break
+            dayStr = "thursday";
+            break;
         case 5:
-            day = "friday";
-            break
+            dayStr = "friday";
+            break;
         case 6:
-            day = "saturday";
-            break
+            dayStr = "saturday";
+            break;
         default:
             return "uh"
     };
 
-    return
-            day + " of week " + (day(v) / 7).toString() + " " + hour(v).toString() + ":" + min.toString();
+    return dayStr + " of week " + (dayOfWeek(v)).toString() + " " + hour(v).toString() + ":" + minu
 }
 
-function /*long*/ dayLong(/*long*/ target) {
+export function /*long*/ dayLong(/*long*/ target) {
     return day(target) * DAY_LEN;
+//    return new Date(0, 0, target).getTime();
 }
 
-function /*long*/ currentWeek() {
+export function /*long*/ currentWeek() {
     var today = new Date();
     var weekStart = new Date(/* year */ today.getFullYear(), /* month */ today.getMonth(), /* day */ today.getDate() - today.getDay())
     return weekStart.getTime()
@@ -103,5 +115,10 @@ export default {
     getTime,
     from,
     dayOfWeek,
-    day
+    timeInWeek,
+    day,
+    DAY_LEN,
+    WEEK_LEN,
+    HOUR_LEN,
+    MINUTE_LEN
 }

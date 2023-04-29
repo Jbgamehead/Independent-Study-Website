@@ -38,10 +38,6 @@ import {
     amber, blue, blueGrey, brown, cyan, deepOrange, deepPurple, green, grey, indigo, lightBlue, lightGreen, lime, orange, pink, purple, red, teal, yellow, common
 } from '@mui/material/colors'
 
-import schedule from "./suggest/schedule.js"
-
-
-
 const allColors = [
     [pink, "pink"],
     [red, "red"],
@@ -67,6 +63,7 @@ const allColors = [
 
 import axios from 'axios'
 
+import provider from "./suggest/provider.js"
 import Utils from './Utils.js'
 
 const today = new Date()
@@ -203,6 +200,22 @@ export default class Demo extends React.PureComponent {
             if (added.members[0] == -1 && added.members.length == 1) {
                 added.isGhost = true
 
+                    var slot = provider.findOpening(added.startDate, added.endDate)
+                    console.log(slot)
+
+                    added = {
+                        title: added.title,
+                        startDate: new Date(slot.start),
+                        endDate: new Date(slot.end),
+                        allDay: false,
+                        members: [slot.id],
+                        roomId: added.roomId,
+                        notes: added.notes,
+                        owner: 1,
+                        slot: slot,
+                        isGhost: true
+                    }
+
                 this.setState((state) => {
                     let { data } = state
                     const startingAddedId = data.length > 0 ? data[data.length - 1].id + 1 : 0
@@ -212,7 +225,7 @@ export default class Demo extends React.PureComponent {
                 return
             }
         }
-        if (added) {
+        if (added != undefined) {
             this.setState((state) => {
                 let { data } = state
 
@@ -235,29 +248,31 @@ export default class Demo extends React.PureComponent {
             })
         }
 
-        if (deleted) {
+        if (deleted != undefined) {
             this.setState((state) => {
                 let { data } = state
                 var rm = data.filter(appointment => appointment.id === deleted)[0]
 
-                var syncData = {
-                    name: rm.title,
-                    start: Utils.toJson(rm.startDate),
-                    end: Utils.toJson(rm.endDate),
-                    people: rm.members,
-                    place: rm.roomId
+                if (!rm.isGhost) {
+                    var syncData = {
+                        name: rm.title,
+                        start: Utils.toJson(rm.startDate),
+                        end: Utils.toJson(rm.endDate),
+                        people: rm.members,
+                        place: rm.roomId
+                    }
+                    deleteAppointment(syncData)
                 }
-                deleteAppointment(syncData)
 
                 data = data.filter(appointment => appointment.id !== deleted)
                 return { data }
             })
         }
 
-        this.setState((state) => {
-            let { data } = state
+        if (changed != undefined) {
+            this.setState((state) => {
+                let { data } = state
 
-            if (changed) {
                 var oldToNew = Object.keys(changed).map((key, index) => {
                     let entry = changed[key]
 
@@ -297,14 +312,18 @@ export default class Demo extends React.PureComponent {
 
                 data = data.map(appointment => (
                     changed[appointment.id] ? { ...appointment, ...changed[appointment.id] } : appointment))
-            }
 
-            return { data }
-        })
+                return { data }
+            })
+        }
     }
 
     render() {
         const { data, resources, grouping, currentViewName, firstRender, tooltipVisible, appointmentMeta } = this.state
+
+        lastChanged = []
+        lastSent = []
+        lastDeleted = []
 
         if (this.state.firstRender) {
             this.state.firstRender = false
@@ -333,6 +352,10 @@ export default class Demo extends React.PureComponent {
                                 color: allColors[i % allColors.length][0],
                                 colorName: allColors[i % allColors.length][1]
                             }])
+
+                            // TODO: request information about the person
+                            var builder = provider.createPerson(employees[i].id)
+                            builder.build()
 
                             lock.done += 1
                         }
@@ -469,8 +492,8 @@ export default class Demo extends React.PureComponent {
                         />
 
                         <WeekView
-                            startDayHour={9}
-                            endDayHour={15}
+                            startDayHour={0}
+                            endDayHour={24}
                             intervalCount={2}
                         />
                         <MonthView
@@ -508,33 +531,6 @@ export default class Demo extends React.PureComponent {
                         <ViewSwitcher />
                     </Scheduler>
                 </Paper>
-
-                <Box
-                    sx={{
-                        width: "100%",
-                        height: 2,
-                        backgroundColor: 'rgb(33, 37, 41)',
-                    }}
-                > </Box>
-                <div style={{ height: "10px" }} display="block"> </div>
-                <Box
-                    class="SuggestionBox"
-                    style={{
-                        width: 300,
-                        height: 200,
-                        margin: "auto",
-                        backgroundColor: 'rgb(33, 37, 41)',
-                        padding: 5
-                    }}
-                >
-                    <h6 style={{ color: "white" }}> Suggestion </h6>
-                    <p style={{ color: "white" }}>
-                        Employee: [name] <br />
-                        Date: [number] <br />
-                        Start: [time] <br />
-                        End: [time] <br />
-                    </p>
-                </Box>
             </body>
         )
     }
