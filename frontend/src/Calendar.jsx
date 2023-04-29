@@ -492,13 +492,13 @@ export default class Demo extends React.PureComponent {
                         />
 
                         <WeekView
-                            startDayHour={0}
-                            endDayHour={24}
+                            startDayHour={9}
+                            endDayHour={15}
                             intervalCount={2}
                         />
                         <MonthView
-                            startDayHour={9}
-                            endDayHour={15}
+                            startDayHour={0}
+                            endDayHour={24}
                             intervalCount={2}
                         />
                         <Appointments />
