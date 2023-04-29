@@ -79,7 +79,16 @@ function sendAppointment(data) {
             }
         })
         .catch(err => console.log(err))
-        ;
+}
+function deleteAppointment(data) {
+    return axios.post('http://localhost:8081/calendar/admin/delete', data)
+        .then(res => {
+            if (res.data.Status !== 'Success') {
+                // TODO: feedback
+                console.log(res)
+            }
+        })
+        .catch(err => console.log(err))
 }
 
 
@@ -102,9 +111,7 @@ const locations = [
 // TODO: probably should put this onto the database
 
 
-const staticValue = [
-    { text: "default", id: 1, color: indigo }
-]
+const owner = [{ text: "Schedule", id: 1 }]
 
 var sentRequest = false
 var unlocked = false
@@ -114,6 +121,15 @@ function getLock(name, amount) {
     if (Object.hasOwn(locks, name)) return locks[name]
     locks[name] = { done: 0, total: amount }
 }
+
+function filter(values) {
+    var output = []
+    for (var i = 0; i < values.length; i++)
+        if (values[i] != undefined)
+            output.push(values[i])
+    return output
+}
+
 
 /* app */
 export default class Demo extends React.PureComponent {
@@ -132,13 +148,13 @@ export default class Demo extends React.PureComponent {
                 title: 'Location',
                 instances: locations,
             }, {
-                fieldName: 'staticValue',
-                title: 'staticValue',
-                instances: staticValue,
+                fieldName: 'owner',
+                title: 'owner',
+                instances: owner,
                 readonly: true
             }],
             grouping: [{
-                resourceName: 'staticValue',
+                resourceName: 'owner',
             }],
 
             number: 0,
@@ -162,30 +178,29 @@ export default class Demo extends React.PureComponent {
     }
 
     commitChanges({ added, changed, deleted, blockSync }) {
+        let collection = filter([added, changed, deleted])
+        if (lastChanged == collection)
+            return
+        lastChanged = collection
+
         if (added && !blockSync) {
             if (added.members[0] == -1 && added.members.length == 1) {
-                console.log(added.members)
                 added.isGhost = true
 
                 this.setState((state) => {
                     let { data } = state
-                    const startingAddedId = data.length > 0 ? data[data.length - 1].id + 1 : 0;
+                    const startingAddedId = data.length > 0 ? data[data.length - 1].id + 1 : 0
                     data = [...data, { id: startingAddedId, ...added }]
                     return { data }
                 })
-
                 return
             }
         }
+        if (added) {
+            this.setState((state) => {
+                let { data } = state
 
-        this.setState((state) => {
-            if (lastChanged == added)
-                return
-            lastChanged = added
-
-            let { data } = state
-            if (added) {
-                const startingAddedId = data.length > 0 ? data[data.length - 1].id + 1 : 0;
+                const startingAddedId = data.length > 0 ? data[data.length - 1].id + 1 : 0
                 data = [...data, { id: startingAddedId, ...added }]
 
                 if (!blockSync) {
@@ -199,13 +214,36 @@ export default class Demo extends React.PureComponent {
                     }
                     sendAppointment(syncData)
                 }
-            }
+
+                return { data }
+            })
+        }
+
+        if (deleted) {
+            this.setState((state) => {
+                let { data } = state
+                var rm = data.filter(appointment => appointment.id === deleted)[0]
+
+                var syncData = {
+                    name: rm.title,
+                    start: Utils.toJson(rm.startDate),
+                    end: Utils.toJson(rm.endDate),
+                    people: rm.members,
+                    place: rm.roomId
+                }
+                deleteAppointment(syncData)
+
+                data = data.filter(appointment => appointment.id !== deleted)
+                return { data }
+            })
+        }
+
+        this.setState((state) => {
+            let { data } = state
+
             if (changed) {
                 data = data.map(appointment => (
                     changed[appointment.id] ? { ...appointment, ...changed[appointment.id] } : appointment))
-            }
-            if (deleted !== undefined) {
-                data = data.filter(appointment => appointment.id !== deleted)
             }
 
             return { data }
@@ -299,7 +337,6 @@ export default class Demo extends React.PureComponent {
 
                         for (var i = 0; i < data.length; i++) {
                             var entry = data[i]
-                            console.log(entry)
 
                             var sp = entry.Assignee.split(",")
                             for (var i1 = 0; i1 < sp.length; i1++)
@@ -314,7 +351,7 @@ export default class Demo extends React.PureComponent {
                                 members: sp,
                                 roomId: entry.Location,
                                 notes: entry.Notes,
-                                staticValue: 1
+                                owner: 1
                             }
                             this.commitChanges({ added: added, blockSync: true }, false)
                         }
@@ -385,7 +422,7 @@ export default class Demo extends React.PureComponent {
                         <Appointments />
                         <Resources
                             data={resources}
-                            mainResourceName="staticValue"
+                            mainResourceName="owner"
                         />
 
                         <IntegratedGrouping />
