@@ -19,7 +19,8 @@ export class PersonBuilder {
         this.id = id
         this.openings = []
 
-        this.addOpening("020100", "020330")
+        this.addOpening("021000", "021130")
+        this.addOpening("051000", "051130")
     }
 
     addOpening(start, end) {
@@ -56,22 +57,25 @@ function timeToString(tm) {return Time.day(tm) + " " + ensureLen(Time.hour(tm)) 
 
 export function findOpening(start, end) {
     var duration = end - start
-    var inWeek = Time.timeInWeek(start)
-    var suggestion = schedule.schedule(start, inWeek, duration, peopleList)
 
-    var today = new Date();
+
+    var today = new Date(start);
     var weekStart = new Date(/* year */ today.getFullYear(), /* month */ today.getMonth(), /* day */ today.getDate() - today.getDay())
 
+    var timeSinceWeek = new Date(start) - weekStart
+    var inWeek = timeSinceWeek
+
+    var suggestion = schedule.schedule(start, inWeek, duration, peopleList)
     var suggested = suggestion.v
 
-    var start = weekStart.getTime()
-    start += Time.day(suggested) * Time.DAY_LEN
-    start += Time.hour(suggested) * Time.HOUR_LEN
-    start += Time.minute(suggested) * Time.MINUTE_LEN
+    var newStart = weekStart.getTime()
+    newStart += Time.day(suggested) * Time.DAY_LEN
+    newStart += Time.hour(suggested) * Time.HOUR_LEN
+    newStart += Time.minute(suggested) * Time.MINUTE_LEN
 
     var id = suggestion.t.id
 
-    return new Slot(id, suggestion.t, start, start + duration)
+    return new Slot(id, suggestion.t, newStart, newStart + duration)
 }
 
 export default {

@@ -176,12 +176,22 @@ export default class Demo extends React.PureComponent {
         }
 
         this.commitChanges = this.commitChanges.bind(this)
+        this.submitSuggestion = this.submitSuggestion.bind(this)
         this.toggleTooltipVisibility = () => {
             const { tooltipVisible } = this.state
             this.setState({ tooltipVisible: !tooltipVisible });
         }
         this.onAppointmentMetaChange = ({ data, target }) => {
             this.setState({ appointmentMeta: { data, target } })
+        }
+    }
+
+    submitSuggestion(appointment, slot, rejected) {
+        this.commitChanges({ deleted: appointment.id })
+        appointment.isGhost = false
+        if (!rejected) {
+            this.commitChanges({ added: appointment })
+            slot.submit()
         }
     }
 
@@ -196,7 +206,7 @@ export default class Demo extends React.PureComponent {
             return
         lastChanged = collection
 
-        if (added && !blockSync) {
+        if (added != undefined && !blockSync) {
             if (added.members[0] == -1 && added.members.length == 1) {
                 added.isGhost = true
 
@@ -358,6 +368,19 @@ export default class Demo extends React.PureComponent {
                             builder.build()
 
                             lock.done += 1
+
+                            var end = new Date().getTime() + (((((60)) * 60)) * 1000)
+                                var added = {
+                                    title: "Event",
+                                    startDate: new Date(),
+                                    endDate: new Date(end),
+                                    allDay: false,
+                                    members: [-1],
+                                    roomId: 1,
+                                    notes: "auto",
+                                    owner: 1
+                                }
+                                this.commitChanges({ added: added }, false)
                         }
 
                         this.setState((state) => {
@@ -472,7 +495,7 @@ export default class Demo extends React.PureComponent {
             var members = this.state.resources[0].instances
             for (var i = 0; i < members.length; i++) if (members[i].id == member) return members[i].color[300]
             return indigo[300]
-        }, (st) => {this.setState(st)}, this.toggleTooltipVisibility, this.onAppointmentMetaChange)
+        }, (st) => {this.setState(st)}, this.toggleTooltipVisibility, this.onAppointmentMetaChange, this.submitSuggestion)
 
         return (
             <body>

@@ -4,6 +4,10 @@ import Person from "./person.js"
 import time from "./time.js"
 
 
+function ensureLen(str) {str = str.toString();if (str.length < 2) return "0" + str; return str}
+function timeToString(tm) {return time.day(tm) + " " + ensureLen(time.hour(tm)) + ":" + ensureLen(time.minute(tm))}
+
+
 function /*long*/ calcAltMethod(/*long*/ trueTarget, /*long*/ target, /*long*/ duration, /*Person*/ person) {
     return person.closestExisting(trueTarget);
 }

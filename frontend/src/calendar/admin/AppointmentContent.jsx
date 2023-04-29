@@ -15,7 +15,8 @@ function template(
     appointments,
     roomMapper, employeeMapper, colorGetter,
     setState,
-    toggleTooltipVisibility, onAppointmentMetaChange
+    toggleTooltipVisibility, onAppointmentMetaChange,
+    submitSuggestion
 ) {
     const StyledAppointmentsAppointmentContent = styled(
       Appointments.AppointmentContent
@@ -74,11 +75,46 @@ function template(
                    </div>
         if (data.isGhost) {
             body = <div/>
-            inf = <div>
-                    {data.members.map((id, index) => {
-                        return <p> {employeeMapper(id)} </p>
-                    })}
+            inf = (
+            <div>
+                <div
+                    style={{
+                        position: "absolute",
+                        bottom: 4,
+                        left: 4,
+                        backgroundColor: "green",
+                        width: "10px",
+                        height: "10px",
+                    }}
+
+                    onClick = {function(e) {
+                        console.log("pressed")
+                        submitSuggestion(data, data.slot)
+                    }}
+                >
                 </div>
+                <div
+                    style={{
+                        position: "absolute",
+                        bottom: 4,
+                        left: 16,
+                        backgroundColor: "red",
+                        width: "10px",
+                        height: "10px",
+                    }}
+
+                    onClick = {function(e) {
+                        console.log("pressed")
+                        submitSuggestion(data, data.slot, true)
+                    }}
+                >
+                </div>
+
+                {data.members.map((id, index) => {
+                    return <p> {employeeMapper(id)} </p>
+                })}
+            </div>
+            )
         }
 
         return (
@@ -90,7 +126,7 @@ function template(
                 style={color}
 
                 onClick={function(e) {
-                    onAppointmentMetaChange({data, target: this})
+                    onAppointmentMetaChange({data, target: e.target.value})
                 }}
             >
                 <div display="box" style={{paddingLeft: 5, paddingBottom: 5, paddingRight: 5}}>
