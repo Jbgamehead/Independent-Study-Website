@@ -70,7 +70,11 @@ console.log(today)
 
 
 var lastChanged = {}
+var lastSent = {}
 function sendAppointment(data) {
+     if (JSON.stringify(lastSent) === JSON.stringify(data))
+        return
+    lastSent = data
     return axios.post('http://localhost:8081/calendar/admin/add', data)
         .then(res => {
             if (res.data.Status !== 'Success') {
@@ -80,7 +84,11 @@ function sendAppointment(data) {
         })
         .catch(err => console.log(err))
 }
+var lastDeleted = {}
 function deleteAppointment(data) {
+     if (JSON.stringify(lastDeleted) === JSON.stringify(data))
+        return
+    lastDeleted = data
     return axios.post('http://localhost:8081/calendar/admin/delete', data)
         .then(res => {
             if (res.data.Status !== 'Success') {
@@ -178,8 +186,13 @@ export default class Demo extends React.PureComponent {
     }
 
     commitChanges({ added, changed, deleted, blockSync }) {
-        let collection = filter([added, changed, deleted])
-        if (lastChanged == collection)
+//         var collection = undefined
+//         if (added) collection = added
+//         if (changed) collection = changed
+//         if (deleted) collection = deleted
+
+        var collection = filter([added, changed, deleted])
+        if (JSON.stringify(lastChanged) === JSON.stringify(collection))
             return
         lastChanged = collection
 
@@ -242,6 +255,43 @@ export default class Demo extends React.PureComponent {
             let { data } = state
 
             if (changed) {
+                var oldToNew = Object.keys(changed).map((key, index) => {
+                    let entry = changed[key]
+
+                    var original = data.filter(appointment => appointment.id == key)[0]
+                    return { original, current: entry }
+                })
+
+                console.log(oldToNew)
+
+                Object.keys(oldToNew).forEach((key, index) => {
+                    var rm = oldToNew[key].original
+                    console.debug(rm)
+                    var syncData = {
+                        name: rm.title,
+                        start: Utils.toJson(rm.startDate),
+                        end: Utils.toJson(rm.endDate),
+                        people: rm.members,
+                        place: rm.roomId
+                    }
+                    deleteAppointment(syncData)
+
+                    var current = oldToNew[key].current
+
+                    let added = {...rm, ...current}
+                    console.debug(added)
+
+                    var addSyncData = {
+                        name: added.title,
+                        start: Utils.toJson(added.startDate),
+                        end: Utils.toJson(added.endDate),
+                        people: added.members,
+                        place: added.roomId,
+                        notes: added.notes,
+                    }
+                    sendAppointment(addSyncData)
+                })
+
                 data = data.map(appointment => (
                     changed[appointment.id] ? { ...appointment, ...changed[appointment.id] } : appointment))
             }
@@ -254,6 +304,8 @@ export default class Demo extends React.PureComponent {
         const { data, resources, grouping, currentViewName, firstRender, tooltipVisible, appointmentMeta } = this.state
 
         if (this.state.firstRender) {
+            this.state.firstRender = false
+
             /* run setup */
             getLock("people", 1)
 
@@ -293,8 +345,6 @@ export default class Demo extends React.PureComponent {
                 })
                 .catch(err => console.log(err));
         }
-
-        this.state.firstRender = false
 
         if (!unlocked) {
             var keys = Object.keys(locks)

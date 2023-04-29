@@ -249,9 +249,9 @@ app.post('/calendar/admin/delete', (req, res) => {
         const notes = orDefault(req.body, "notes", "")
 
         var str = people.toString().replace(" ", "")
-        console.log(sql.replace("?", name).replace("?", place).replace("?", str).replace("?", date(start)).replace("?", date(end)))
 
         con.query(sql, [name, place.toString(), str, date(start), date(end), notes], (err, result) => {
+            console.log(err)
             if (err) return res.json({ Error: "Error running query" })
             return res.json({ Status: "Success" })
         })
@@ -284,6 +284,7 @@ app.post('/calendar/admin/add', (req, res) => {
         var str = people.toString().replace(" ", "")
 
         con.query(sql, [name, place.toString(), str, date(start), date(end), notes], (err, result) => {
+            console.log(err)
             if (err) return res.json({ Error: "Error running query" })
             return res.json({ Status: "Success" })
         })
