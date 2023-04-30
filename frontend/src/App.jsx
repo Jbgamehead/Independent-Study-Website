@@ -1,6 +1,7 @@
 import React from 'react'
 import Login from './Login'
 import Dashboard from './Dashboard'
+import EmployeeSidebar from './EmployeeSidebar'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Employee from './Employee'
 import Profile from './Profile'
@@ -29,8 +30,10 @@ function App() {
         <Route path='/login' element={<Login />} />
         <Route path='/employeelogin' element={<EmployeeLogin />} />
         <Route path='/employeedetail/:id' element={<EmployeeDetail />} />
-        <Route path='/employee/dashboard' element={<EmployeeDashboard />} />
-        <Route path='/employee/calendar/:id' element={<EmployeeCalendar />} />
+        <Route path="/employee" element={<EmployeeSidebar />}>
+            <Route path='/employee/dashboard' element={<EmployeeDashboard />} />
+            <Route path='/employee/calendar' element={<EmployeeCalendar />} />
+        </Route>
         <Route path='/start' element={<Start />} />
         <Route path="/dashboard" element={<Dashboard />}>
           <Route path="/dashboard/dashhome" element={<Dashhome />} />

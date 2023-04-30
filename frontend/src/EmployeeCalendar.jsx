@@ -41,72 +41,11 @@ const allColors = [[indigo, "indigo"]]
 
 import Query from './util/Query.jsx'
 
-import provider from "./suggest/provider.js"
-import Utils from './Utils.js'
-
 const today = new Date()
 console.log(today)
 
 
 var lastChanged = {}
-var lastSent = {}
-function sendAppointment(data) {
-     if (JSON.stringify(lastSent) === JSON.stringify(data))
-        return
-    lastSent = data
-    return Query.post('http://localhost:8081/calendar/admin/add', data)
-        .then(res => {
-            if (res.data.Status !== 'Success') {
-                // TODO: feedback
-                console.log(res)
-            }
-        })
-        .catch(err => console.log(err))
-}
-var lastDeleted = {}
-function deleteAppointment(data) {
-     if (JSON.stringify(lastDeleted) === JSON.stringify(data))
-        return
-    lastDeleted = data
-    return Query.post('http://localhost:8081/calendar/admin/delete', data)
-        .then(res => {
-            if (res.data.Status !== 'Success') {
-                // TODO: feedback
-                console.log(res)
-            }
-        })
-        .catch(err => console.log(err))
-}
-function queryEmployee(data) {
-    Query.post("http://localhost:8081/availability/get", {id: data})
-        .then(res => {
-            if (res.data.Status === 'Success') {
-                var data = res.data.data
-                if (data.length == 0) return
-
-                var builder = provider.createPerson(data)
-
-                var entry = data[0]
-                var openings = entry.Openings
-                var endings = entry.Durations
-
-                while (true) {
-                    if (!openings) break
-
-                    var opening = openings.substring(0, 6)
-                    openings = openings.substring(6)
-                    var closing = endings.substring(0, 6)
-                    endings = endings.substring(6)
-
-                    builder.addOpening(opening, closing)
-                }
-
-                builder.build()
-            }
-        })
-        .catch(err => console.log(err))
-}
-
 
 const appointments = []
 
@@ -116,8 +55,6 @@ const owners = [{
     color: indigo,
     colorName: "indigo"
 }]
-
-
 
 const locations = [
     { text: 'Mansfield', id: 1 },
@@ -202,46 +139,12 @@ export default class Demo extends React.PureComponent {
         }
     }
 
-    commitChanges({ added, changed, deleted, blockSync }) {
-//         var collection = undefined
-//         if (added) collection = added
-//         if (changed) collection = changed
-//         if (deleted) collection = deleted
-
+    commitChanges({ added, changed, deleted }) {
         var collection = filter([added, changed, deleted])
         if (JSON.stringify(lastChanged) === JSON.stringify(collection))
             return
         lastChanged = collection
 
-        if (added != undefined && !blockSync) {
-            if (added.members[0] == -1 && added.members.length == 1) {
-                added.isGhost = true
-
-                    var slot = provider.findOpening(added.startDate, added.endDate)
-                    console.log(slot)
-
-                    added = {
-                        title: added.title,
-                        startDate: new Date(slot.start),
-                        endDate: new Date(slot.end),
-                        allDay: false,
-                        members: [slot.id],
-                        roomId: added.roomId,
-                        notes: added.notes,
-                        owner: 1,
-                        slot: slot,
-                        isGhost: true
-                    }
-
-                this.setState((state) => {
-                    let { data } = state
-                    const startingAddedId = data.length > 0 ? data[data.length - 1].id + 1 : 0
-                    data = [...data, { id: startingAddedId, ...added }]
-                    return { data }
-                })
-                return
-            }
-        }
         if (added != undefined) {
             this.setState((state) => {
                 provider.addEvent(added, (member) => {
@@ -255,99 +158,6 @@ export default class Demo extends React.PureComponent {
                 const startingAddedId = data.length > 0 ? data[data.length - 1].id + 1 : 0
                 data = [...data, { id: startingAddedId, ...added }]
 
-                if (!blockSync) {
-                    var syncData = {
-                        name: added.title,
-                        start: Utils.toJson(added.startDate),
-                        end: Utils.toJson(added.endDate),
-                        people: added.members,
-                        place: added.roomId,
-                        notes: added.notes,
-                    }
-                    sendAppointment(syncData)
-                }
-
-                return { data }
-            })
-        }
-
-        if (deleted != undefined) {
-            this.setState((state) => {
-                let { data } = state
-                var rm = data.filter(appointment => appointment.id === deleted)[0]
-                provider.removeEvent(rm, (member) => {
-                    var members = this.state.resources[0].instances
-                    for (var i = 0; i < members.length; i++) if (members[i].id == member) return members[i].text
-                    return "missing"
-                })
-
-                if (!rm.isGhost) {
-                    var syncData = {
-                        name: rm.title,
-                        start: Utils.toJson(rm.startDate),
-                        end: Utils.toJson(rm.endDate),
-                        people: rm.members,
-                        place: rm.roomId
-                    }
-                    deleteAppointment(syncData)
-                }
-
-                data = data.filter(appointment => appointment.id !== deleted)
-                return { data }
-            })
-        }
-
-        if (changed != undefined) {
-            this.setState((state) => {
-                let { data } = state
-
-                var oldToNew = Object.keys(changed).map((key, index) => {
-                    let entry = changed[key]
-
-                    var original = data.filter(appointment => appointment.id == key)[0]
-                    return { original, current: entry }
-                })
-
-                Object.keys(oldToNew).forEach((key, index) => {
-                    var rm = oldToNew[key].original
-
-                    var syncData = {
-                        name: rm.title,
-                        start: Utils.toJson(rm.startDate),
-                        end: Utils.toJson(rm.endDate),
-                        people: rm.members,
-                        place: rm.roomId
-                    }
-                    deleteAppointment(syncData)
-                    provider.removeEvent(rm, (member) => {
-                        var members = this.state.resources[0].instances
-                        for (var i = 0; i < members.length; i++) if (members[i].id == member) return members[i].text
-                        return "missing"
-                    })
-
-                    var current = oldToNew[key].current
-
-                    let added = {...rm, ...current}
-                    provider.addEvent(added, (member) => {
-                        var members = this.state.resources[0].instances
-                        for (var i = 0; i < members.length; i++) if (members[i].id == member) return members[i].text
-                        return "missing"
-                    })
-
-                    var addSyncData = {
-                        name: added.title,
-                        start: Utils.toJson(added.startDate),
-                        end: Utils.toJson(added.endDate),
-                        people: added.members,
-                        place: added.roomId,
-                        notes: added.notes,
-                    }
-                    sendAppointment(addSyncData)
-                })
-
-                data = data.map(appointment => (
-                    changed[appointment.id] ? { ...appointment, ...changed[appointment.id] } : appointment))
-
                 return { data }
             })
         }
@@ -357,8 +167,6 @@ export default class Demo extends React.PureComponent {
         const { data, resources, grouping, currentViewName, firstRender, tooltipVisible, appointmentMeta } = this.state
 
         lastChanged = []
-        lastSent = []
-        lastDeleted = []
 
         if (this.state.firstRender) {
             this.state.firstRender = false
@@ -368,7 +176,7 @@ export default class Demo extends React.PureComponent {
             getLock("table", 1)
 
             /* add employees */
-            Query.get('http://localhost:8081/getEmployee')
+            Query.get('http://localhost:8081/get/1')
                 .then(res => {
                     if (res.data.Status === 'Success') {
                         var { resources } = this.state
