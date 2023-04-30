@@ -270,8 +270,8 @@ app.post('/employeelogin', (req, res) => {
 
 app.post('/logout', (req, res) => {
     if (validate(req.body, ['token'])) {
-        if (validate(sessions, req.body.token)) {
-            sessions.delete(req.body.token)
+        if (Object.hasOwn(sessions, req.body.token)) {
+            delete sessions[req.body.token]
         }
     }
     return res.json({ Status: "Success" })
