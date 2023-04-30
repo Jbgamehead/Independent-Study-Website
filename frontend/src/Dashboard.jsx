@@ -12,8 +12,8 @@ function Dashboard() {
     const handleLogout = () => {
         Query.post('http://localhost:8081/logout')
             .then(res => {
-                removeCookie('token', {path:'/'})
-                removeCookie('auth_type', {path:'/'})
+                removeCookie('token', { path: '/' })
+                removeCookie('auth_type', { path: '/' })
                 navigate('/start')
             }).catch(err => console.log(err));
     }
@@ -22,7 +22,7 @@ function Dashboard() {
             <div class="row flex-nowrap">
                 <div class="col-auto col-md-3 col-xl-2 px-sm-2 px-0 bg-dark">
                     <div class="d-flex flex-column align-items-center align-items-sm-start px-3 pt-2 text-white min-vh-100">
-                        <Link to="/dashboard/" class="d-flex align-items-center pb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+                        <Link to="/dashboard/dashhome" class="d-flex align-items-center pb-3 mb-md-0 me-md-auto text-white text-decoration-none">
                             <span class="fs-5 d-none d-sm-inline"><strong>Admin Dashboard</strong></span>
                         </Link>
                         <ul class="nav nav-pills flex-column mb-sm-auto mb-0 align-items-center align-items-sm-start" id="menu">

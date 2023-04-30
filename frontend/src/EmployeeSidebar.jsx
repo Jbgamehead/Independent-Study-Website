@@ -13,7 +13,7 @@ function EmployeeSidebar() {
         axios.get('http://localhost:8081/logout')
             .then(res => {
 
-                removeCookie('employee_id', {path:'/'})
+                removeCookie('employee_id', { path: '/' })
                 navigate('/start')
             }).catch(err => console.log(err));
     }
