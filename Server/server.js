@@ -317,8 +317,7 @@ app.post('/calendar/admin/get', (req, res) => {
 })
 
 app.post('/availability/get', (req, res) => {
-    const sql = "SELECT * FROM availability WHERE EmployeeId=?"
-    console.log(req.body)
+    const sql = "SELECT * FROM `availability` WHERE EmployeeId=?"
     if (!checkAuth(req.body)) {res.json({Error: "No Auth"}); return}
 
     if (validate(req.body, ["id"])) {
@@ -357,7 +356,6 @@ app.post('/calendar/admin/delete', (req, res) => {
         var str = people.toString().replace(" ", "")
 
         con.query(sql, [name, place.toString(), str, date(start), date(end), notes], (err, result) => {
-            console.log(err)
             if (err) return res.json({ Error: "Error running query" })
             return res.json({ Status: "Success" })
         })
@@ -392,7 +390,6 @@ app.post('/calendar/admin/add', (req, res) => {
         var str = people.toString().replace(" ", "")
 
         con.query(sql, [name, place.toString(), str, date(start), date(end), notes], (err, result) => {
-            console.log(err)
             if (err) return res.json({ Error: "Error running query" })
             return res.json({ Status: "Success" })
         })

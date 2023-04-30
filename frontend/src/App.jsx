@@ -13,6 +13,7 @@ import AddEmployee from './AddEmployee'
 import Calendar from './Calendar'
 import EmployeeEdit from './employeeEdit'
 import Start from './Start'
+import EmployeeCalendar from './EmployeeCalendar'
 import EmployeeLogin from './EmployeeLogin'
 import EmployeeDetail from './EmployeeDetail'
 import EmployeeDashboard from './EmployeeDashboard'
@@ -28,7 +29,8 @@ function App() {
         <Route path='/login' element={<Login />} />
         <Route path='/employeelogin' element={<EmployeeLogin />} />
         <Route path='/employeedetail/:id' element={<EmployeeDetail />} />
-        <Route path='/employeedashboard' element={<EmployeeDashboard />} />
+        <Route path='/employee/dashboard' element={<EmployeeDashboard />} />
+        <Route path='/employee/calendar/:id' element={<EmployeeCalendar />} />
         <Route path='/start' element={<Start />} />
         <Route path="/dashboard" element={<Dashboard />}>
           <Route path="/dashboard/dashhome" element={<Dashhome />} />

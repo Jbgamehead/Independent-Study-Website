@@ -34,31 +34,9 @@ import {
     DragDropProvider,
     GroupingPanel,
 } from '@devexpress/dx-react-scheduler-material-ui'
-import {
-    amber, blue, blueGrey, brown, cyan, deepOrange, deepPurple, green, grey, indigo, lightBlue, lightGreen, lime, orange, pink, purple, red, teal, yellow, common
-} from '@mui/material/colors'
+import {indigo} from '@mui/material/colors'
 
-const allColors = [
-    [pink, "pink"],
-    [red, "red"],
-    [deepOrange, "deepOrange"],
-    [orange, "orange"],
-    [amber, "amber"],
-    [yellow, "yellow"],
-    [lime, "lime"],
-    [lightGreen, "lightGreen"],
-    [green, "green"],
-    [teal, "teal"],
-    [blue, "blue"],
-    [lightBlue, "lightBlue"],
-    [cyan, "cyan"],
-    [indigo, "indigo"],
-    [deepPurple, "deepPurple"],
-    [purple, "purple"],
-    [brown, "brown"],
-    [blueGrey, "blueGrey"],
-    [grey, "grey"],
-]
+const allColors = [[indigo, "indigo"]]
 
 
 import Query from './util/Query.jsx'
