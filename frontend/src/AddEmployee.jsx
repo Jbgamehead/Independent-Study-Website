@@ -1,6 +1,9 @@
 import axios from "axios";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Cookies } from 'react-cookie'
+
+const cookies = new Cookies()
 
 function AddEmployee() {
     const [data, setData] = useState({
@@ -23,6 +26,7 @@ function AddEmployee() {
         formdata.append("address", data.address);
         formdata.append("salary", data.salary);
         formdata.append("image", data.image);
+        formdata.append("token", cookies.get('token'));
         axios.post('http://localhost:8081/dashboard/create', formdata)
             .then(res => {
                 navigate('/dashboard/employee')
