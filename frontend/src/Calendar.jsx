@@ -61,7 +61,7 @@ const allColors = [
 ]
 
 
-import axios from 'axios'
+import Query from './util/Query.jsx'
 
 import provider from "./suggest/provider.js"
 import Utils from './Utils.js'
@@ -76,7 +76,7 @@ function sendAppointment(data) {
      if (JSON.stringify(lastSent) === JSON.stringify(data))
         return
     lastSent = data
-    return axios.post('http://localhost:8081/calendar/admin/add', data)
+    return Query.post('http://localhost:8081/calendar/admin/add', data)
         .then(res => {
             if (res.data.Status !== 'Success') {
                 // TODO: feedback
@@ -90,7 +90,7 @@ function deleteAppointment(data) {
      if (JSON.stringify(lastDeleted) === JSON.stringify(data))
         return
     lastDeleted = data
-    return axios.post('http://localhost:8081/calendar/admin/delete', data)
+    return Query.post('http://localhost:8081/calendar/admin/delete', data)
         .then(res => {
             if (res.data.Status !== 'Success') {
                 // TODO: feedback
@@ -237,6 +237,12 @@ export default class Demo extends React.PureComponent {
         }
         if (added != undefined) {
             this.setState((state) => {
+                provider.addEvent(added, (member) => {
+                    var members = this.state.resources[0].instances
+                    for (var i = 0; i < members.length; i++) if (members[i].id == member) return members[i].text
+                    return "missing"
+                })
+
                 let { data } = state
 
                 const startingAddedId = data.length > 0 ? data[data.length - 1].id + 1 : 0
@@ -262,6 +268,11 @@ export default class Demo extends React.PureComponent {
             this.setState((state) => {
                 let { data } = state
                 var rm = data.filter(appointment => appointment.id === deleted)[0]
+                provider.removeEvent(rm, (member) => {
+                    var members = this.state.resources[0].instances
+                    for (var i = 0; i < members.length; i++) if (members[i].id == member) return members[i].text
+                    return "missing"
+                })
 
                 if (!rm.isGhost) {
                     var syncData = {
@@ -290,11 +301,9 @@ export default class Demo extends React.PureComponent {
                     return { original, current: entry }
                 })
 
-                console.log(oldToNew)
-
                 Object.keys(oldToNew).forEach((key, index) => {
                     var rm = oldToNew[key].original
-                    console.debug(rm)
+
                     var syncData = {
                         name: rm.title,
                         start: Utils.toJson(rm.startDate),
@@ -303,11 +312,20 @@ export default class Demo extends React.PureComponent {
                         place: rm.roomId
                     }
                     deleteAppointment(syncData)
+                    provider.removeEvent(rm, (member) => {
+                        var members = this.state.resources[0].instances
+                        for (var i = 0; i < members.length; i++) if (members[i].id == member) return members[i].text
+                        return "missing"
+                    })
 
                     var current = oldToNew[key].current
 
                     let added = {...rm, ...current}
-                    console.debug(added)
+                    provider.addEvent(added, (member) => {
+                        var members = this.state.resources[0].instances
+                        for (var i = 0; i < members.length; i++) if (members[i].id == member) return members[i].text
+                        return "missing"
+                    })
 
                     var addSyncData = {
                         name: added.title,
@@ -343,7 +361,7 @@ export default class Demo extends React.PureComponent {
             getLock("table", 1)
 
             /* add employees */
-            axios.get('http://localhost:8081/getEmployee')
+            Query.get('http://localhost:8081/getEmployee')
                 .then(res => {
                     if (res.data.Status === 'Success') {
                         var { resources } = this.state
@@ -368,19 +386,6 @@ export default class Demo extends React.PureComponent {
                             builder.build()
 
                             lock.done += 1
-
-                            var end = new Date().getTime() + (((((60)) * 60)) * 1000)
-                                var added = {
-                                    title: "Event",
-                                    startDate: new Date(),
-                                    endDate: new Date(end),
-                                    allDay: false,
-                                    members: [-1],
-                                    roomId: 1,
-                                    notes: "auto",
-                                    owner: 1
-                                }
-                                this.commitChanges({ added: added }, false)
                         }
 
                         this.setState((state) => {
@@ -396,7 +401,7 @@ export default class Demo extends React.PureComponent {
                 .catch(err => console.log(err));
 
             /* get schedule data */
-            axios.get('http://localhost:8081/calendar/admin/get')
+            Query.get('http://localhost:8081/calendar/admin/get')
                 .then(res => {
                     if (res.data.Status === 'Success') {
                         var data = res.data.data
@@ -490,7 +495,7 @@ export default class Demo extends React.PureComponent {
         }, (member) => {
             var members = this.state.resources[0].instances
             for (var i = 0; i < members.length; i++) if (members[i].id == member) return members[i].text
-            return indigo[300]
+            return "missing"
         }, (member) => {
             var members = this.state.resources[0].instances
             for (var i = 0; i < members.length; i++) if (members[i].id == member) return members[i].color[300]

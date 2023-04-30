@@ -55,7 +55,38 @@ export function createPerson(name) {
 function ensureLen(str) {str = str.toString();if (str.length < 2) return "0" + str; return str}
 function timeToString(tm) {return Time.day(tm) + " " + ensureLen(Time.hour(tm)) + ":" + ensureLen(Time.minute(tm))}
 
+
+var toRun = []
+
+export function addEvent(data, memberMapper) {
+    toRun.push(() => {
+        for (var i = 0; i < data.members.length; i++) {
+            var start = data.startDate
+            var end = data.endDate
+
+            var avg = (start.getTime() + end.getTime()) / 2
+            people[memberMapper(data.members[i])].schedule(avg)
+        }
+    })
+}
+
+export function removeEvent(data) {
+    toRun.push(() => {
+        for (var i = 0; i < data.members.length; i++) {
+            var start = data.startDate
+            var end = data.endDate
+
+            var avg = (start.getTime() + end.getTime()) / 2
+            people[memberMapper(data.members[i])].unschedule(avg)
+        }
+    })
+}
+
 export function findOpening(start, end) {
+    for (var i = 0; i < toRun.length; i++)
+        toRun[i]()
+    toRun = []
+
     var duration = end - start
 
 
@@ -81,5 +112,6 @@ export function findOpening(start, end) {
 export default {
     PersonBuilder,
     createPerson,
-    findOpening
+    findOpening,
+    addEvent, removeEvent
 }

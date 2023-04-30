@@ -1,13 +1,13 @@
 import React, { useEffect } from "react";
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import { Link, Outlet, useNavigate } from "react-router-dom"
-import axios from "axios";
+import Query from './util/Query.jsx'
 
 function Dashboard() {
     const navigate = useNavigate()
 
     const handleLogout = () => {
-        axios.get('http://localhost:8081/logout')
+        Query.post('http://localhost:8081/logout')
             .then(res => {
                 navigate('/start')
             }).catch(err => console.log(err));

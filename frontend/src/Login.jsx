@@ -5,6 +5,9 @@ import { useNavigate } from 'react-router-dom'
 import Navbar from './Navbar'
 import Footer from './Footer'
 
+import { useCookies } from 'react-cookie'
+
+
 function Login() {
     const [values, setValues] = useState({
         email: '',
@@ -14,11 +17,16 @@ function Login() {
     const navigate = useNavigate()
     const [error, setError] = useState('')
 
+    const [cookies, setCookie] = useCookies(['token'])
+
     const handleSumbit = (event) => {
         event.preventDefault();
         axios.post('http://localhost:8081/login', values)
             .then(res => {
                 if (res.data.Status === 'Success') {
+                    console.log("success")
+                    setCookie('token', res.data.token, { path: '/', SameSite: "Lax"})
+                    setCookie('auth_type', "admin", { path: '/', SameSite: "Lax"})
                     navigate('/dashboard');
                 } else {
                     setError(res.data.Error);

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
+import Query from './util/Query.jsx'
 
 const Employee = () => {
     const [data, setData] = useState([])
     useEffect(() => {
-        axios.get('http://localhost:8081/getEmployee')
+        Query.get('http://localhost:8081/getEmployee')
             .then(res => {
                 if (res.data.Status === "Success") {
                     setData(res.data.Result);
@@ -17,7 +17,7 @@ const Employee = () => {
     }, [])
 
     const handleDelete = (id) => {
-        axios.delete('http://localhost:8081/delete/' + id)
+        Query.delete('http://localhost:8081/delete/' + id)
             .then(res => {
                 if (res.data.Status === "Success") {
                     window.location.reload(true);

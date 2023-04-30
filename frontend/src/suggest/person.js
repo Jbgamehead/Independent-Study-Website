@@ -104,6 +104,17 @@ export class Person {
         this.scheduledFor = scheduledNumbers;
     }
 
+    unschedule(/*long*/ v) {
+        var scheduledNumbers = []
+        scheduledNumbers.push(v);
+
+        for (var i = 0; i < this.scheduledFor.length; i++) {
+            var l = this.scheduledFor[i]
+            if (l != v) scheduledNumbers.push(l)
+        }
+        this.scheduledFor = scheduledNumbers
+    }
+
     closestExisting(/*long*/ target) {
         var delta = Number.MAX_VALUE;
         for (var i = 0; i < this.scheduledFor.length; i++)

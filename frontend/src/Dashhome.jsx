@@ -1,22 +1,23 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import Query from './util/Query.jsx'
+import axios from "axios"
 
 function Dashhome() {
     const [adminCount, setAdminCount] = useState()
     const [employeeCount, setEmployeeCount] = useState()
     const [salary, setSalary] = useState()
     useEffect(() => {
-        axios.get('http://localhost:8081/adminCount')
+        Query.get('http://localhost:8081/adminCount')
             .then(res => {
                 setAdminCount(res.data[0].admin)
             }).catch(err => console.log(err));
 
-        axios.get('http://localhost:8081/employeeCount')
+        Query.get('http://localhost:8081/employeeCount')
             .then(res => {
                 setEmployeeCount(res.data[0].employee)
             }).catch(err => console.log(err));
 
-        axios.get('http://localhost:8081/salary')
+        Query.get('http://localhost:8081/salary')
             .then(res => {
                 setSalary(res.data[0].sumOfSalary)
             }).catch(err => console.log(err));

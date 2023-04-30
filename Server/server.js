@@ -14,7 +14,26 @@ app.use(express.json())
 app.use(express.static('public'))
 
 
+var sessions = {}
+
+
 /* utilities */
+function fromJson(data) {return new Date(data.y, data.m, data.d, data.h, data.mi, data.s)}
+function date(dt) {return dt.getTime()}
+function compute(obj, func, initial=0) {
+    var value = initial
+    for (var i = 0; i < obj.length; i++) value = func(obj[i], value)
+    return value
+}
+// gets a property if it exists
+// elsewise, returns the default
+function orDefault(obj, property, value) {
+    if (Object.hasOwn(obj, property))
+        return obj[property]
+    return value
+}
+
+
 // checks that the object has all the specified properties
 function validate(body, names) {
     // for some reason, a for in loop didn't work here
@@ -39,20 +58,74 @@ function validate(body, names) {
     return true
 }
 
-// gets a property if it exists
-// elsewise, returns the default
-function orDefault(obj, property, value) {
-    if (Object.hasOwn(obj, property))
-        return obj[property]
-    return value
+function genToken(email, password, time) {
+    var tok = time.getTime() + compute(password, (c, val) => val + c.charCodeAt(0))
+
+    tok *= compute(email, (c, val) => val + c.charCodeAt(0) * c.charCodeAt(0))
+    var characters = "abcdefghijklmnopqrstuvwxyz123456789"
+    tok = compute(characters, (c, val) => val + c.charCodeAt(0), tok)
+
+    var prev = 0
+    var index = 0
+    tok = compute(tok.toString(), (c, val) => {
+        var res = val + characters[parseInt(c + prev) % characters.length]
+        prev = res.charCodeAt(index)
+        index = index + 1
+        return res
+    }, "")
+
+    return tok
 }
 
-function fromJson(data) {
-    return new Date(data.y, data.m, data.d, data.h, data.mi, data.s)
+function checkSessions() {
+    var dt = new Date()
+    Object.keys(sessions).forEach((key, index) => {
+        var session = sessions[key]
+        if (session.expirationTime <= dt.getTime()) {
+            delete sessions[key]
+        }
+    })
 }
 
-function date(dt) {
-    return dt.getTime()
+const TWO_HOURS = (((((60)) * 60)) * 2000)
+
+function genSession(email, password, time) {
+    var session = {
+        email,
+        token: genToken(email, password, time),
+        expirationTime: (time.getTime() + TWO_HOURS)
+    }
+    sessions[session.token] = session
+    return session
+}
+
+var counter = 0
+
+function checkAuth(headers) {
+    counter = counter + 1
+    if (counter > 30) {
+        checkSessions()
+        counter = 0
+    }
+
+console.log(headers)
+    if (Object.hasOwn(headers, 'token')) {
+        var token = headers.token
+        if (Object.hasOwn(sessions, token)) {
+            var session = sessions[token]
+            var time = new Date().getTime()
+            if (session.expirationTime > time) {
+                session.expirationTime = time + TWO_HOURS
+                return true
+            }
+            console.log('expired')
+            return false
+        }
+        console.log('session non-existent')
+        return false
+    }
+    console.log('no token')
+    return false
 }
 
 
@@ -87,7 +160,8 @@ con.connect((err) => {
 
 
 /* entry points */
-app.get('/getEmployee', (req, res) => {
+app.post('/getEmployee', (req, res) => {
+    if (!checkAuth(req.body)) {res.json({Error: "No Auth"}); return}
     const sql = "SELECT * FROM employee"
     con.query(sql, (err, result) => {
         if (err) return res.json({ Error: "Get employee error in sql" })
@@ -106,8 +180,10 @@ app.get('/get/:id', (req, res) => {
     }
 })
 
-app.put('/update/:id', (req, res) => {
+app.post('/update/:id', (req, res) => {
     if (validate(req, ["params.id", "body.salary"])) {
+        if (!checkAuth(req.body)) {res.json({Error: "No Auth"}); return}
+
         const id = req.params.id
         const sql = "UPDATE employee set salary = ? WHERE id = ?"
         con.query(sql, [req.body.salary, id], (err, result) => {
@@ -117,8 +193,10 @@ app.put('/update/:id', (req, res) => {
     }
 })
 
-app.delete('/delete/:id', (req, res) => {
+app.post('/delete/:id', (req, res) => {
     if (validate(req.params, ["id"])) {
+        if (!checkAuth(req.body)) {res.json({Error: "No Auth"}); return}
+
         const id = req.params.id
         const sql = "DELETE FROM employee WHERE id = ?"
         con.query(sql, [id], (err, result) => {
@@ -128,15 +206,19 @@ app.delete('/delete/:id', (req, res) => {
     }
 })
 
-app.get('/adminCount', (req, res) => {
+app.post('/adminCount', (req, res) => {
     const sql = "Select count(id) as admin from users"
+    if (!checkAuth(req.body)) {res.json({Error: "No Auth"}); return}
+
     con.query(sql, (err, result) => {
         if (err) return res.json({ Error: "Error running query" })
         return res.json(result)
     })
 })
 
-app.get('/employeeCount', (req, res) => {
+app.post('/employeeCount', (req, res) => {
+    if (!checkAuth(req.body)) {res.json({Error: "No Auth"}); return}
+
     const sql = "Select count(id) as employee from employee"
     con.query(sql, (err, result) => {
         if (err) return res.json({ Error: "Error running query" })
@@ -144,7 +226,9 @@ app.get('/employeeCount', (req, res) => {
     })
 })
 
-app.get('/salary', (req, res) => {
+app.post('/salary', (req, res) => {
+    if (!checkAuth(req.body)) {res.json({Error: "No Auth"}); return}
+
     const sql = "Select sum(salary) as sumOfSalary from employee"
     con.query(sql, (err, result) => {
         if (err) return res.json({ Error: "Error running query" })
@@ -158,7 +242,8 @@ app.post('/login', (req, res) => {
         con.query(sql, [req.body.email, req.body.password], (err, result) => {
             if (err) return res.json({ Status: "Error", Error: "Error running query" })
             if (result.length > 0) {
-                return res.json({ Status: "Success" })
+                var session = genSession(req.body.email, req.body.password, new Date())
+                return res.json({ Status: "Success", token: session.token })
             } else {
                 return res.json({ Status: "Error", Error: "Wrong Email or Password" })
             }
@@ -183,14 +268,21 @@ app.post('/employeelogin', (req, res) => {
     }
 })
 
-app.get('/logout', (req, res) => {
-    res.clearCookie('token')
+app.post('/logout', (req, res) => {
+    if (validate(req.body, ['token'])) {
+        if (validate(sessions, req.body.token)) {
+            sessions.delete(req.body.token)
+        }
+    }
     return res.json({ Status: "Success" })
 })
 
 app.post('/dashboard/create', upload.single('image'), (req, res) => {
     const sql = "INSERT INTO employee (`name`,`email`,`password`,`address`,`salary`,`image`) VALUES (?)"
+
     if (validate(req, ["body.name", "body.password", "body.email", "body.address", "body.salary", "file.filename"])) {
+        if (!checkAuth(req.body)) {res.json({Error: "No Auth"}); return}
+
         bcrypt.hash(req.body.password.toString(), 10, (err, hash) => {
             if (err) return res.json({ Error: "Error wile hashing password" })
             const values = [
@@ -211,8 +303,10 @@ app.post('/dashboard/create', upload.single('image'), (req, res) => {
 
 
 /* calendar functions */
-app.get('/calendar/admin/get', (req, res) => {
+app.post('/calendar/admin/get', (req, res) => {
     const sql = "SELECT * FROM schedule WHERE end >= ? OR start >= ?"
+    if (!checkAuth(req.body)) {res.json({Error: "No Auth"}); return}
+
     const today = new Date()
     const weekStart = new Date(/* year */ today.getFullYear(), /* month */ today.getMonth(), /* day */ today.getDate() - today.getDay())
 //    const sqlParam = "TIMESTAMP(\'" + weekStart.getFullYear() + "-" + weekStart.getMonth() + "-" + weekStart.getDate() + "\')"
@@ -226,9 +320,9 @@ app.get('/calendar/admin/get', (req, res) => {
 app.post('/calendar/admin/delete', (req, res) => {
     const sql = "DELETE FROM `schedule` WHERE Event=? AND Location=? AND Assignee=? AND Start=? AND End=?;"
 
-    console.log(req.body)
-
     if (validate(req.body, ["name", "start", "end", "place", "people"])) {
+        if (!checkAuth(req.body)) {res.json({Error: "No Auth"}); return}
+
         const name = req.body.name
         const start = fromJson(req.body.start)
         const end = fromJson(req.body.end)
@@ -262,6 +356,8 @@ app.post('/calendar/admin/add', (req, res) => {
     const sql = "INSERT INTO `schedule` (`Event`, `Location`, `Assignee`, `Start`, `End`, `Notes`) VALUES (?, ?, ?, ?, ?, ?)"
 
     if (validate(req.body, ["name", "start", "end", "place", "people"])) {
+        if (!checkAuth(req.body)) {res.json({Error: "No Auth"}); return}
+
         const name = req.body.name
         const start = fromJson(req.body.start)
         const end = fromJson(req.body.end)
