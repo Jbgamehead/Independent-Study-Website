@@ -1,6 +1,7 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import Query from './util/Query.jsx'
 
 function EmployeeEdit() {
     const [data, setData] = useState({
@@ -29,7 +30,7 @@ function EmployeeEdit() {
 
     const handleSumbit = (event) => {
         event.preventDefault();
-        axios.put('http://localhost:8081/update/' + id, data)
+        Query.put('http://localhost:8081/update/' + id, data)
             .then(res => {
                 if (res.data.Status === "Success") {
                     navigate('/dashboard/employee')

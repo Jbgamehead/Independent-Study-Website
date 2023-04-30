@@ -7,7 +7,7 @@ import About from './About'
 import Services from './Services'
 import Contact from './Contact'
 import AddEmployee from './AddEmployee'
-import EmployeeEdit from './employeeEdit'
+import EmployeeEdit from './EmployeeEdit'
 import Start from './Start'
 
 import EmployeeDetail from './EmployeeDetail'

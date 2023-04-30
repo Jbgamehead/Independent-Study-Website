@@ -17,7 +17,7 @@ const Employee = () => {
     }, [])
 
     const handleDelete = (id) => {
-        Query.delete('http://localhost:8081/delete/' + id)
+        Query.del('http://localhost:8081/delete/' + id)
             .then(res => {
                 if (res.data.Status === "Success") {
                     window.location.reload(true);

@@ -30,5 +30,5 @@ function del(url, data) {
 }
 
 export default {
-    get, post
+    get, post, put, del
 }
