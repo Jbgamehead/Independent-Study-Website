@@ -18,9 +18,6 @@ export class PersonBuilder {
     constructor(id) {
         this.id = id
         this.openings = []
-
-        this.addOpening("021000", "021130")
-        this.addOpening("051000", "051130")
     }
 
     addOpening(start, end) {

@@ -25,8 +25,11 @@ function Login() {
             .then(res => {
                 if (res.data.Status === 'Success') {
                     console.log("success")
-                    setCookie('token', res.data.token, { path: '/', SameSite: "Lax"})
-                    setCookie('auth_type', "admin", { path: '/', SameSite: "Lax"})
+
+                    var d = new Date();
+                    d.setTime(d.getTime() + (100*60*60*1000));
+                    setCookie('token', res.data.token, { path: '/', SameSite: "Lax", expires: d})
+                    setCookie('auth_type', "admin", { path: '/', SameSite: "Lax", expires: d})
                     navigate('/dashboard');
                 } else {
                     setError(res.data.Error);

@@ -108,7 +108,6 @@ function checkAuth(headers) {
         counter = 0
     }
 
-console.log(headers)
     if (Object.hasOwn(headers, 'token')) {
         var token = headers.token
         if (Object.hasOwn(sessions, token)) {
@@ -315,6 +314,19 @@ app.post('/calendar/admin/get', (req, res) => {
         if (err) return res.json({ Error: "Error running query" })
         return res.json({Status: "Success", data: result})
     })
+})
+
+app.post('/availability/get', (req, res) => {
+    const sql = "SELECT * FROM availability WHERE EmployeeId=?"
+    console.log(req.body)
+    if (!checkAuth(req.body)) {res.json({Error: "No Auth"}); return}
+
+    if (validate(req.body, ["id"])) {
+        con.query(sql, req.body.id, (err, result) => {
+            if (err) return res.json({ Error: "Error running query" })
+            return res.json({Status: "Success", data: result})
+        })
+    }
 })
 
 app.post('/calendar/admin/delete', (req, res) => {

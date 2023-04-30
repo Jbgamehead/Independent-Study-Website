@@ -99,6 +99,18 @@ function deleteAppointment(data) {
         })
         .catch(err => console.log(err))
 }
+function queryEmployee(data) {
+    Query.post("http://localhost:8081/availability/get", {id: data})
+        .then(res => {
+            if (res.data.Status !== 'Success') {
+                console.log(res.data)
+
+                var builder = provider.createPerson(data)
+                builder.build()
+            }
+        })
+        .catch(err => console.log(err))
+}
 
 
 const appointments = []
@@ -382,8 +394,7 @@ export default class Demo extends React.PureComponent {
                             }])
 
                             // TODO: request information about the person
-                            var builder = provider.createPerson(employees[i].id)
-                            builder.build()
+                            queryEmployee(employees[i].id)
 
                             lock.done += 1
                         }

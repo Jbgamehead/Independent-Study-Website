@@ -7,13 +7,13 @@ import { useCookies } from 'react-cookie'
 function Dashboard() {
     const navigate = useNavigate()
 
-    const [cookies, removeCookie] = useCookies(['cookie-name']);
+    const [cookies, setCookie, removeCookie] = useCookies(['cookie-name']);
 
     const handleLogout = () => {
         Query.post('http://localhost:8081/logout')
             .then(res => {
-                removeCookie('token')
-                removeCookie('auth_type')
+                removeCookie('token', {path:'/'})
+                removeCookie('auth_type', {path:'/'})
                 navigate('/start')
             }).catch(err => console.log(err));
     }
