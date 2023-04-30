@@ -119,6 +119,8 @@ export default class Demo extends React.PureComponent {
             },
         }
 
+        sentRequest = false
+
         this.commitChanges = this.commitChanges.bind(this)
         this.submitSuggestion = this.submitSuggestion.bind(this)
         this.toggleTooltipVisibility = () => {
@@ -197,6 +199,10 @@ export default class Demo extends React.PureComponent {
                             this.commitChanges({ added: added, blockSync: true }, false)
                             lock.done += 1
                         }
+
+                        this.setState((state) => {
+                            return { number: 1 }
+                        })
 
                         return res.data
                     } else {
