@@ -18,7 +18,7 @@ import EmployeeCalendar from './EmployeeCalendar'
 import EmployeeLogin from './EmployeeLogin'
 import EmployeeDetail from './EmployeeDetail'
 import EmployeeDashboard from './EmployeeDashboard'
-
+import EmployeeProfile from './EmployeeProfile'
 function App() {
   return (
     <BrowserRouter>
@@ -31,8 +31,9 @@ function App() {
         <Route path='/employeelogin' element={<EmployeeLogin />} />
         <Route path='/employeedetail/:id' element={<EmployeeDetail />} />
         <Route path="/employee" element={<EmployeeSidebar />}>
-            <Route path='/employee/dashboard' element={<EmployeeDashboard />} />
-            <Route path='/employee/calendar' element={<EmployeeCalendar />} />
+          <Route path='/employee/dashboard' element={<EmployeeDashboard />} />
+          <Route path='/employee/calendar' element={<EmployeeCalendar />} />
+          <Route path='/employee/profile' element={<EmployeeProfile />} />
         </Route>
         <Route path='/start' element={<Start />} />
         <Route path="/dashboard" element={<Dashboard />}>
