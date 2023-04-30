@@ -394,31 +394,33 @@ export default class Demo extends React.PureComponent {
             Query.get('http://localhost:8081/getEmployee')
                 .then(res => {
                     if (res.data.Status === 'Success') {
+                        var employees = res.data.Result
+                        var whyDoesReactDoEverythingTwice = 0
+
                         this.setState((state) => {
-                            var { resources } = this.state
-
-                            if (resources[0].instances.length != 1) return
-
-                            var employees = res.data.Result
+                            whyDoesReactDoEverythingTwice += 1
+                            if (whyDoesReactDoEverythingTwice != 1) return
 
                             var lock = getLock("people", 1)
                             lock.total = employees.length
 
+                            var { resources } = state
+                            var res = JSON.parse(JSON.stringify(resources))
+
                             for (var i = 0; i < employees.length; i++) {
-                                resources[0].instances = ([...resources[0].instances, {
+                                res[0].instances = ([...res[0].instances, {
                                     text: employees[i].name,
                                     id: employees[i].id,
                                     color: allColors[i % allColors.length][0],
                                     colorName: allColors[i % allColors.length][1]
                                 }])
 
-                                // TODO: request information about the person
                                 queryEmployee(employees[i].id)
 
                                 lock.done += 1
                             }
 
-                            return { resources, number: state.number + 1 }
+                            return { resources: res, number: state.number + 1 }
                         })
 
                         return res.data
@@ -433,10 +435,12 @@ export default class Demo extends React.PureComponent {
             Query.get('http://localhost:8081/calendar/admin/get')
                 .then(res => {
                     if (res.data.Status === 'Success') {
-                        this.setState((state) => {
-                            var data = res.data.data
+                        var data = res.data.data
+                        var whyDoesReactDoEverythingTwice = 0
 
-                            if (this.state.data.length != 0) return
+                        this.setState((state) => {
+                            whyDoesReactDoEverythingTwice += 1
+                            if (whyDoesReactDoEverythingTwice != 1) return
 
                             var lock = getLock("table", 1)
                             if (data.length == 0) lock.done += 1
@@ -464,8 +468,9 @@ export default class Demo extends React.PureComponent {
                                 lock.done += 1
                             }
 
-                            return res.data
+                            return { number: state.number + 1 }
                         })
+                        return res.data
                     } else {
                         // TODO: display error
                         console.log(res)
