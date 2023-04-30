@@ -1,111 +1,40 @@
 import * as React from 'react';
-
-// main layout
-import Paper from '@mui/material/Paper'
-
-// basic elements
-import Button from '@mui/material/Button'
-import TextField from '@mui/material/TextField'
-import LocationOn from "@mui/icons-material/LocationOn"
-import Box from '@mui/material/Box'
-
-import AppointmentContent from './calendar/admin/AppointmentContent'
-
-// calendar
+import Paper from '@mui/material/Paper';
 import {
-    ViewState,
-    GroupingState,
-    IntegratedGrouping,
-    IntegratedEditing,
-    EditingState,
-} from '@devexpress/dx-react-scheduler'
+    ViewState, GroupingState, IntegratedGrouping, IntegratedEditing, EditingState,
+} from '@devexpress/dx-react-scheduler';
 import {
     Scheduler,
-
-    Toolbar,
-    MonthView,
-    WeekView,
-    ViewSwitcher,
-
     Resources,
     Appointments,
     AppointmentTooltip,
-    AppointmentForm,
-    DragDropProvider,
     GroupingPanel,
-} from '@devexpress/dx-react-scheduler-material-ui'
+    DayView,
+    DragDropProvider,
+    AppointmentForm,
+} from '@devexpress/dx-react-scheduler-material-ui';
 import {
-    amber, blue, blueGrey, brown, cyan, deepOrange, deepPurple, green, grey, indigo, lightBlue, lightGreen, lime, orange, pink, purple, red, teal, yellow, common
-} from '@mui/material/colors'
-
-const allColors = [
-    [pink, "pink"],
-    [red, "red"],
-    [deepOrange, "deepOrange"],
-    [orange, "orange"],
-    [amber, "amber"],
-    [yellow, "yellow"],
-    [lime, "lime"],
-    [lightGreen, "lightGreen"],
-    [green, "green"],
-    [teal, "teal"],
-    [blue, "blue"],
-    [lightBlue, "lightBlue"],
-    [cyan, "cyan"],
-    [indigo, "indigo"],
-    [deepPurple, "deepPurple"],
-    [purple, "purple"],
-    [brown, "brown"],
-    [blueGrey, "blueGrey"],
-    [grey, "grey"],
-]
+    teal, indigo,
+} from '@mui/material/colors';
 
 
 import axios from 'axios'
+import { Cookies } from 'react-cookie'
 
-import Utils from './Utils.js'
+const cookies = new Cookies()
+var id = cookies.get('employee_id')
 
-const today = new Date()
-console.log(today)
-
-
-var lastChanged = {}
-function sendAppointment(data) {
-    return axios.post('http://localhost:8081/calendar/admin/add', data)
-        .then(res => {
-            if (res.data.Status !== 'Success') {
-                // TODO: feedback
-                console.log(res)
-            }
-        })
-        .catch(err => console.log(err))
-        ;
-}
-
-
+// variables and such
 const appointments = []
-
 const owners = [{
-    text: 'Auto',
+    text: 'You',
     id: -1,
     color: indigo,
     colorName: "indigo"
 }]
+const owner = [{ text: "Schedule", id: 1 }]
 
-// TODO: request employees from database
-
-
-const locations = [
-    { text: 'Mansfield', id: 1 },
-    { text: 'Budd Lake', id: 2 },
-]
-// TODO: probably should put this onto the database
-
-
-const staticValue = [
-    { text: "default", id: 1, color: indigo }
-]
-
+var lastChanged = []
 var sentRequest = false
 var unlocked = false
 var locks = {}
@@ -115,322 +44,208 @@ function getLock(name, amount) {
     locks[name] = { done: 0, total: amount }
 }
 
-/* app */
+function filter(values) {
+    var output = []
+    for (var i = 0; i < values.length; i++)
+        if (values[i] != undefined)
+            output.push(values[i])
+    return output
+}
+
+import Time from "./suggest/time.js"
+
+function ensureLen(str) {str = str.toString();if (str.length < 2) return "0" + str; return str}
+function parseTime(dt) {
+    var today = new Date(dt);
+    var weekStart = new Date(/* year */ today.getFullYear(), /* month */ today.getMonth(), /* day */ today.getDate() - today.getDay())
+    var timeSinceWeek = new Date(dt) - weekStart
+
+    return ensureLen(Time.day(timeSinceWeek)) + ensureLen(Time.hour(timeSinceWeek)) + ensureLen(Time.minute(timeSinceWeek))
+}
+
+function parseData(data) {
+    var starts = ""
+    var ends = ""
+    for (var i = 0; i < data.length; i++) {
+        var entry = data[i]
+
+        starts += (parseTime(entry.startDate))
+        ends += (parseTime(entry.endDate))
+    }
+
+    return { starts, ends }
+}
+
+function sendAvailability(data) {
+    return axios.post('http://localhost:8081/availability/set/' + id, data)
+        .then(res => {
+            if (res.data.Status !== 'Success') {
+                // TODO: feedback
+                console.log(res)
+            }
+        })
+        .catch(err => console.log(err))
+}
+
+function entry(time, index) {
+    return parseInt(time[index*2].toString() + time[index*2+1].toString())
+}
+
+function parseDate(time) {
+    return Time.from(entry(time, 1), entry(time, 2)) + (entry(time, 0) * Time.DAY_LEN)
+}
+
 export default class Demo extends React.PureComponent {
     constructor(props) {
         super(props);
         this.state = {
             data: appointments,
             resources: [{
-                fieldName: 'members',
-                title: 'Members',
-                instances: owners,
-                default: -1,
-                allowMultiple: true,
-            }, {
-                fieldName: 'roomId',
-                title: 'Location',
-                instances: locations,
-            }, {
-                fieldName: 'staticValue',
-                title: 'staticValue',
-                instances: staticValue
+                fieldName: 'owner',
+                title: 'owner',
+                instances: owner,
+                readonly: true
             }],
             grouping: [{
-                resourceName: 'staticValue',
+                resourceName: 'owner',
             }],
+        };
 
-            number: 0,
-            firstRender: true,
-
-            tooltipVisible: false,
-            appointmentMeta: {
-                target: null,
-                data: {},
-            },
-        }
-
-        this.commitChanges = this.commitChanges.bind(this)
-        this.toggleTooltipVisibility = () => {
-            const { tooltipVisible } = this.state
-            this.setState({ tooltipVisible: !tooltipVisible });
-        }
-        this.onAppointmentMetaChange = ({ data, target }) => {
-            this.setState({ appointmentMeta: { data, target } })
-        }
+        this.commitChanges = this.commitChanges.bind(this);
     }
 
     commitChanges({ added, changed, deleted, blockSync }) {
-        if (added && !blockSync) {
-            if (added.members[0] == -1 && added.members.length == 0) {
-                return
-            }
-        }
-        this.setState((state) => {
-            if (lastChanged == added)
-                return
-            lastChanged = added
+    console.log(added)
+        var collection = filter([added, changed, deleted])
+        if (JSON.stringify(lastChanged) === JSON.stringify(collection))
+            return
+        lastChanged = collection
 
-            let { data } = state
-            if (added) {
-                const startingAddedId = data.length > 0 ? data[data.length - 1].id + 1 : 0;
+        if (added != undefined) {
+            this.setState((state) => {
+                let { data } = state
+
+                const startingAddedId = data.length > 0 ? data[data.length - 1].id + 1 : 0
                 data = [...data, { id: startingAddedId, ...added }]
 
                 if (!blockSync) {
+                    var availabilityData = parseData(data)
                     var syncData = {
-                        name: added.title,
-                        start: Utils.toJson(added.startDate),
-                        end: Utils.toJson(added.endDate),
-                        people: added.members,
-                        place: added.roomId,
-                        notes: added.notes,
+                        start: availabilityData.starts,
+                        end: availabilityData.ends,
                     }
-                    sendAppointment(syncData)
+                    sendAvailability(syncData)
                 }
-            }
-            if (changed) {
+
+                return { data }
+            })
+        }
+
+        if (deleted != undefined) {
+            this.setState((state) => {
+                let { data } = state
+                var rm = data.filter(appointment => appointment.id === deleted)[0]
+                data = data.filter(appointment => appointment.id !== deleted)
+
+                var availabilityData = parseData(data)
+                var syncData = {
+                    start: availabilityData.starts,
+                    end: availabilityData.ends,
+                }
+                sendAvailability(syncData)
+
+                return { data }
+            })
+        }
+
+        if (changed != undefined) {
+            this.setState((state) => {
+                let { data } = state
                 data = data.map(appointment => (
                     changed[appointment.id] ? { ...appointment, ...changed[appointment.id] } : appointment))
-            }
-            if (deleted !== undefined) {
-                data = data.filter(appointment => appointment.id !== deleted)
-            }
 
-            return { data }
-        })
-    }
+                var availabilityData = parseData(data)
+                var syncData = {
+                    start: availabilityData.starts,
+                    end: availabilityData.ends,
+                }
+                sendAvailability(syncData)
 
-    currentViewNameChange = (currentViewName) => {
-        this.setState({ currentViewName })
+                return { data }
+            })
+        }
     }
 
     render() {
-        const { data, resources, grouping, currentViewName, firstRender, tooltipVisible, appointmentMeta } = this.state
+        const { data, resources, grouping } = this.state;
 
-        if (this.state.firstRender) {
-            /* run setup */
-            getLock("people", 1)
+        if (!sentRequest) {
+            sentRequest = true
 
-            /* add employees */
-            axios.get('http://localhost:8081/getEmployee')
+            axios.post("http://localhost:8081/availability/get/" + id)
                 .then(res => {
-                    if (res.data.Status === 'Success') {
-                        var { resources } = this.state
-
-                        if (resources[0].instances.length != 1) return
-
-                        var employees = res.data.Result
-
-                        var lock = getLock("people", 1)
-                        lock.total = employees.length
-
-                        for (var i = 0; i < employees.length; i++) {
-                            resources[0].instances = ([...resources[0].instances, {
-                                text: employees[i].name,
-                                id: employees[i].id,
-                                color: allColors[i % allColors.length][0],
-                                colorName: allColors[i % allColors.length][1]
-                            }])
-
-                            lock.done += 1
-                        }
-
-                        this.setState((state) => {
-                            return { resources, number: state.number + 1 }
-                        })
-
-                        return res.data
-                    } else {
-                        // TODO: display error
-                        console.log(res)
-                    }
-                })
-                .catch(err => console.log(err));
-        }
-
-        this.state.firstRender = false
-
-        if (!unlocked) {
-            var keys = Object.keys(locks)
-
-            var total = 0
-            var done = 0
-            var missed = false
-
-            for (var i = 0; i < keys.length; i++) {
-                var lock = locks[keys[i]]
-                if (lock.done < lock.total) {
-                    done += lock.done
-                    total += lock.total
-                    missed = true
-                } else {
-                    done += lock.total
-                    total += lock.total
-                }
-            }
-
-            if (missed) {
-                return (
-                    <Paper>
-                        <body>
-                            <h1> Loading </h1>
-                        </body>
-                    </Paper>
-                )
-            }
-
-            unlocked = true
-
-            /* get schedule data */
-            axios.get('http://localhost:8081/calendar/admin/get')
-                .then(res => {
+                    console.log(res)
                     if (res.data.Status === 'Success') {
                         var data = res.data.data
+                        console.log(data)
+                        if (data.length == 0) return
 
-                        if (this.state.data.length != 0) return
+                        var entry = data[0]
+                        var openings = entry.Openings
+                        var endings = entry.Durations
 
-                        for (var i = 0; i < data.length; i++) {
-                            var entry = data[i]
-                            console.log(entry)
+                        while (true) {
+                            if (!openings) break
 
-                            var sp = entry.Assignee.split(",")
-                            for (var i1 = 0; i1 < sp.length; i1++)
-                                sp[i1] = parseInt(sp[i1])
-                            if (sp.length == 0)
-                                sp = [-1, ...sp]
+                            var opening = openings.substring(0, 6)
+                            openings = openings.substring(6)
+                            var closing = endings.substring(0, 6)
+                            endings = endings.substring(6)
+
+                            var start = new Date("Sun Jan 01 2023 00:00:00 GMT-0500 (Eastern Standard Time").getTime()
+
+                            var startTime = parseDate(opening) + start
                             var added = {
-                                title: entry.Event,
-                                startDate: new Date(entry.Start),
-                                endDate: new Date(entry.End),
-                                allDay: false,
-                                members: sp,
-                                roomId: entry.Location,
-                                staticValue: 1
+                                    startDate: new Date(parseDate(opening) + start),
+                                    endDate: new Date(parseDate(closing) + start),
+                                    "allDay": false,
+                                    "owner": 1
                             }
-                            this.commitChanges({ added: added, blockSync: true }, false)
+                            console.log(added)
+                            this.commitChanges({ added, blockSync: true })
                         }
-
-                        return res.data
-                    } else {
-                        // TODO: display error
-                        console.log(res)
                     }
                 })
-                .catch(err => console.log(err));
+                .catch(err => console.log(err))
         }
 
-        const styles = theme => ({
-            textField: {
-                width: '90%',
-                marginLeft: 'auto',
-                marginRight: 'auto',
-                paddingBottom: 0,
-                marginTop: 0,
-                fontWeight: 500
-            },
-            input: {
-                color: 'white'
-            }
-        });
-
-        const content = AppointmentContent.template(this.state.data, (id) => {
-            for (var i = 0; i < locations.length; i++) {
-                if (locations[i].id == id) return locations[i].text
-            }
-            return "[Location not found]"
-        }, (member) => {
-            var members = this.state.resources[0].instances
-            for (var i = 0; i < members.length; i++) if (members[i].id == member) return members[i].color[300]
-            return indigo[300]
-        }, (st) => {this.setState(st)}, this.toggleTooltipVisibility, this.onAppointmentMetaChange)
-
         return (
-            <body>
-                <Paper>
-                    <Scheduler
-                        data={data}
-                    >
-                        <EditingState
-                            onCommitChanges={this.commitChanges}
-                        />
-                        <GroupingState
-                            grouping={grouping}
-                        />
+            <Paper>
+                <Scheduler data={data}>
+                    <ViewState defaultCurrentDate="2023-01-01"/>
+                    <EditingState onCommitChanges={this.commitChanges}/>
+                    <GroupingState grouping={grouping}/>
 
-                        <ViewState
-                            defaultCurrentViewName="Week"
-                        />
+                    <DayView
+                        startDayHour={9}
+                        endDayHour={15}
+                        intervalCount={7}
+                    />
+                    <Appointments />
+                    <Resources
+                        data={resources}
+                        mainResourceName="owner"
+                    />
 
-                        <WeekView
-                            startDayHour={9}
-                            endDayHour={15}
-                            intervalCount={2}
-                        />
-                        <MonthView
-                            startDayHour={9}
-                            endDayHour={15}
-                            intervalCount={2}
-                        />
-                        <Appointments />
-                        <Resources
-                            data={resources}
-                            mainResourceName="staticValue"
-                        />
+                    <IntegratedGrouping />
+                    <IntegratedEditing />
 
-                        <IntegratedGrouping />
-                        <IntegratedEditing />
-
-                        <GroupingPanel />
-                        <DragDropProvider />
-
-
-                        <Appointments appointmentContentComponent={content}/>
-                        <AppointmentTooltip
-                            showOpenButton
-                            showDeleteButton
-                            showCloseButton
-
-                            visible={tooltipVisible}
-                            onVisibilityChange={this.toggleTooltipVisibility}
-                            appointmentMeta={appointmentMeta}
-                            onAppointmentMetaChange={this.onAppointmentMetaChange}
-                         />
-
-                        <AppointmentForm />
-
-                        <Toolbar />
-                        <ViewSwitcher />
-                    </Scheduler>
-                </Paper>
-
-                <Box
-                    sx={{
-                        width: "100%",
-                        height: 2,
-                        backgroundColor: 'rgb(33, 37, 41)',
-                    }}
-                > </Box>
-                <div style={{ height: "10px" }} display="block"> </div>
-                <Box
-                    class="SuggestionBox"
-                    style={{
-                        width: 300,
-                        height: 200,
-                        margin: "auto",
-                        backgroundColor: 'rgb(33, 37, 41)',
-                        padding: 5
-                    }}
-                >
-                    <h6 style={{ color: "white" }}> Suggestion </h6>
-                    <p style={{ color: "white" }}>
-                        Employee: [name] <br />
-                        Date: [number] <br />
-                        Start: [time] <br />
-                        End: [time] <br />
-                    </p>
-                </Box>
-                <div style={{ height: "10px" }}> </div>
-            </body>
-        )
+                    <AppointmentTooltip showDeleteButton showOpenButton showCloseButton />
+                    <AppointmentForm />
+                    <GroupingPanel />
+                    <DragDropProvider />
+                </Scheduler>
+            </Paper>
+        );
     }
 }

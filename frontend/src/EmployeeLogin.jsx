@@ -5,20 +5,31 @@ import { useNavigate } from 'react-router-dom'
 import Navbar from './Navbar'
 import Footer from './Footer'
 
+import { useCookies } from 'react-cookie'
+
+
 function EmployeeLogin() {
     const [values, setValues] = useState({
         email: '',
         password: ''
     })
+
     const navigate = useNavigate()
     const [error, setError] = useState('')
+
+    const [cookies, setCookie] = useCookies(['token'])
 
     const handleSumbit = (event) => {
         event.preventDefault();
         axios.post('http://localhost:8081/employeelogin', values)
             .then(res => {
                 if (res.data.Status === 'Success') {
-                    const id = res.data.id;
+                    const id = res.data.id
+                    console.log(id)
+
+                    var d = new Date();
+                    d.setTime(d.getTime() + (100*60*60*1000));
+                    setCookie('employee_id', id, { path: '/', SameSite: "Lax", expires: d})
                     navigate('/employee/dashboard/');
                 } else {
                     setError(res.data.Error);

@@ -1,16 +1,22 @@
 import { Link, Outlet, useNavigate } from "react-router-dom"
 import axios from "axios";
+import { useCookies } from 'react-cookie'
+
+
 
 function EmployeeSidebar() {
     const navigate = useNavigate()
 
+    const [cookies, setCookie, removeCookie] = useCookies(['cookie-name']);
+
     const handleLogout = () => {
         axios.get('http://localhost:8081/logout')
             .then(res => {
+
+                removeCookie('employee_id', {path:'/'})
                 navigate('/start')
             }).catch(err => console.log(err));
     }
-
     return (
         <div class="container-fluid">
             <div class="row flex-nowrap">
@@ -25,7 +31,7 @@ function EmployeeSidebar() {
                                     <i class="fs-4 bi-calendar"></i> <span class="ms-1 d-none d-sm-inline text-white ">Calendar</span> </Link>
                             </li>
                             <li>
-                                <Link to="/employee/available" class="nav-link px-0 align-middle text-white">
+                                <Link to="/employee/availability" class="nav-link px-0 align-middle text-white">
                                     <i class="fs-4 bi-box"></i> <span class="ms-1 d-none d-sm-inline text-white">Days Available</span></Link>
                             </li>
                             <li>

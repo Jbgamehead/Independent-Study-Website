@@ -256,13 +256,14 @@ app.post('/employeelogin', (req, res) => {
         con.query(sql, [req.body.email, req.body.password], (err, result) => {
             if (err) return res.json({ Status: "Error", Error: "Error running query" })
             if (result.length > 0) {
-                bcrypt.compare(req.body.password.toString(), result[0].password, (err, response) => {
-                    if (err) return res.json({ Error: "password error" })
-                })
-                return res.json({ Status: "Success" })
-            } else {
-                return res.json({ Status: "Error", Error: "Wrong Email or Password" })
+                for (var i = 0; i < result.length; i++) {
+                    bcrypt.compare(req.body.password.toString(), result[i].password, (err, response) => {
+                        if (err) return res.json({ Error: "password error" })
+                    })
+                    return res.json({ Status: "Success", id: result[i].id })
+                }
             }
+            return res.json({ Status: "Error", Error: "Wrong Email or Password" })
         })
     }
 })
@@ -316,6 +317,35 @@ app.post('/calendar/admin/get', (req, res) => {
     })
 })
 
+app.get('/calendar/employee/get/:id', (req, res) => {
+    const sql = "SELECT * FROM schedule WHERE end >= ? OR start >= ?"
+
+    const id = req.params.id
+
+    const today = new Date()
+    const weekStart = new Date(/* year */ today.getFullYear(), /* month */ today.getMonth(), /* day */ today.getDate() - today.getDay())
+    const sqlParam = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate())
+    con.query(sql, [sqlParam, sqlParam, id], (err, result) => {
+        var ret = []
+
+        // filter for events which include this employee
+        for (var i = 0; i < result.length; i++) {
+            var element = result[i]
+            var assignedTo = element.Assignee
+            assignedTo = assignedTo.split(',')
+            for (var i1 = 0; i1 < assignedTo.length; i1++) {
+                if (assignedTo[i1] == id.toString()) {
+                    ret.push(element)
+                    continue
+                }
+            }
+        }
+
+        if (err) return res.json({ Error: "Error running query" })
+        return res.json({Status: "Success", data: ret})
+    })
+})
+
 app.post('/availability/get', (req, res) => {
     const sql = "SELECT * FROM `availability` WHERE EmployeeId=?"
     if (!checkAuth(req.body)) {res.json({Error: "No Auth"}); return}
@@ -325,6 +355,41 @@ app.post('/availability/get', (req, res) => {
             if (err) return res.json({ Error: "Error running query" })
             return res.json({Status: "Success", data: result})
         })
+    }
+})
+
+// TODO: merge into /availability/get
+app.post('/availability/get/:id', (req, res) => {
+    const sql = "SELECT * FROM `availability` WHERE EmployeeId=?"
+
+    const id = req.params.id
+
+    con.query(sql, [id], (err, result) => {
+        if (err) return res.json({ Error: "Error running query" })
+        return res.json({Status: "Success", data: result})
+    })
+})
+
+app.post('/availability/set/:id', (req, res) => {
+    const queries = [
+        "DELETE FROM `availability` WHERE EmployeeId=?",
+        "INSERT INTO `availability` SET EmployeeId=?,Openings=?,Durations=?"
+    ]
+
+    if (validate(req.body, ["start", "end"])) {
+        const id = req.params.id
+
+        for (var i = 0; i < queries.length; i++) {
+            const sql = queries[i]
+
+            const indx = i
+            con.query(sql, [id, req.body.start, req.body.end], (err, result) => {
+                if (indx == queries.length - 1) {
+                    if (err) return res.json({ Error: "Error running query" })
+                    return res.json({Status: "Success", data: result})
+                }
+            })
+        }
     }
 })
 

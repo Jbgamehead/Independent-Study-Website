@@ -16,8 +16,6 @@ import {
     ViewState,
     GroupingState,
     IntegratedGrouping,
-    IntegratedEditing,
-    EditingState,
 } from '@devexpress/dx-react-scheduler'
 import {
     Scheduler,
@@ -30,8 +28,6 @@ import {
     Resources,
     Appointments,
     AppointmentTooltip,
-    AppointmentForm,
-    DragDropProvider,
     GroupingPanel,
 } from '@devexpress/dx-react-scheduler-material-ui'
 import {indigo} from '@mui/material/colors'
@@ -39,7 +35,11 @@ import {indigo} from '@mui/material/colors'
 const allColors = [[indigo, "indigo"]]
 
 
-import Query from './util/Query.jsx'
+import axios from "axios";
+import { Cookies } from 'react-cookie'
+
+const cookies = new Cookies()
+var id = cookies.get('employee_id')
 
 const today = new Date()
 console.log(today)
@@ -147,12 +147,6 @@ export default class Demo extends React.PureComponent {
 
         if (added != undefined) {
             this.setState((state) => {
-                provider.addEvent(added, (member) => {
-                    var members = this.state.resources[0].instances
-                    for (var i = 0; i < members.length; i++) if (members[i].id == member) return members[i].text
-                    return "missing"
-                })
-
                 let { data } = state
 
                 const startingAddedId = data.length > 0 ? data[data.length - 1].id + 1 : 0
@@ -172,51 +166,12 @@ export default class Demo extends React.PureComponent {
             this.state.firstRender = false
 
             /* run setup */
-            getLock("people", 1)
             getLock("table", 1)
 
-            /* add employees */
-            Query.get('http://localhost:8081/get/1')
-                .then(res => {
-                    if (res.data.Status === 'Success') {
-                        var { resources } = this.state
-
-                        if (resources[0].instances.length != 1) return
-
-                        var employees = res.data.Result
-
-                        var lock = getLock("people", 1)
-                        lock.total = employees.length
-
-                        for (var i = 0; i < employees.length; i++) {
-                            resources[0].instances = ([...resources[0].instances, {
-                                text: employees[i].name,
-                                id: employees[i].id,
-                                color: allColors[i % allColors.length][0],
-                                colorName: allColors[i % allColors.length][1]
-                            }])
-
-                            // TODO: request information about the person
-                            queryEmployee(employees[i].id)
-
-                            lock.done += 1
-                        }
-
-                        this.setState((state) => {
-                            return { resources, number: state.number + 1 }
-                        })
-
-                        return res.data
-                    } else {
-                        // TODO: display error
-                        console.log(res)
-                    }
-                })
-                .catch(err => console.log(err));
-
             /* get schedule data */
-            Query.get('http://localhost:8081/calendar/admin/get')
+            axios.get('http://localhost:8081/calendar/employee/get/' + id)
                 .then(res => {
+                console.log(res)
                     if (res.data.Status === 'Success') {
                         var data = res.data.data
 
@@ -229,17 +184,12 @@ export default class Demo extends React.PureComponent {
                         for (var i = 0; i < data.length; i++) {
                             var entry = data[i]
 
-                            var sp = entry.Assignee.split(",")
-                            for (var i1 = 0; i1 < sp.length; i1++)
-                                sp[i1] = parseInt(sp[i1])
-                            if (sp.length == 0)
-                                sp = [-1, ...sp]
                             var added = {
                                 title: entry.Event,
                                 startDate: new Date(entry.Start),
                                 endDate: new Date(entry.End),
                                 allDay: false,
-                                members: sp,
+                                members: [-1],
                                 roomId: entry.Location,
                                 notes: entry.Notes,
                                 owner: 1
@@ -322,9 +272,6 @@ export default class Demo extends React.PureComponent {
                     <Scheduler
                         data={data}
                     >
-                        <EditingState
-                            onCommitChanges={this.commitChanges}
-                        />
                         <GroupingState
                             grouping={grouping}
                         />
@@ -350,24 +297,16 @@ export default class Demo extends React.PureComponent {
                         />
 
                         <IntegratedGrouping />
-                        <IntegratedEditing />
-
                         <GroupingPanel />
-                        <DragDropProvider />
-
 
                         <Appointments appointmentContentComponent={content}/>
                         <AppointmentTooltip
-                            showOpenButton
-                            showDeleteButton
                             showCloseButton
 
                             visible={tooltipVisible}
                             appointmentMeta={appointmentMeta}
                             onVisibilityChange={this.toggleTooltipVisibility}
                          />
-
-                        <AppointmentForm />
 
                         <Toolbar />
                         <ViewSwitcher />

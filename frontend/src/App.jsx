@@ -1,7 +1,4 @@
 import React from 'react'
-import Login from './Login'
-import Dashboard from './Dashboard'
-import EmployeeSidebar from './EmployeeSidebar'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Employee from './Employee'
 import Profile from './Profile'
@@ -9,14 +6,27 @@ import Home from './Home'
 import About from './About'
 import Services from './Services'
 import Contact from './Contact'
-import Dashhome from './Dashhome'
 import AddEmployee from './AddEmployee'
-import Calendar from './Calendar'
 import EmployeeEdit from './employeeEdit'
 import Start from './Start'
-import EmployeeCalendar from './EmployeeCalendar'
-import EmployeeLogin from './EmployeeLogin'
+
 import EmployeeDetail from './EmployeeDetail'
+
+// sidebars
+import Dashboard from './Dashboard'
+import EmployeeSidebar from './EmployeeSidebar'
+
+// calendars
+import Calendar from './Calendar'
+import EmployeeCalendar from './EmployeeCalendar'
+import AvailabilityCalendar from './AvailabilityCalendar'
+
+// logins
+import Login from './Login'
+import EmployeeLogin from './EmployeeLogin'
+
+// dashboards
+import Dashhome from './Dashhome'
 import EmployeeDashboard from './EmployeeDashboard'
 
 function App() {
@@ -33,6 +43,7 @@ function App() {
         <Route path="/employee" element={<EmployeeSidebar />}>
             <Route path='/employee/dashboard' element={<EmployeeDashboard />} />
             <Route path='/employee/calendar' element={<EmployeeCalendar />} />
+            <Route path='/employee/availability' element={<AvailabilityCalendar />} />
         </Route>
         <Route path='/start' element={<Start />} />
         <Route path="/dashboard" element={<Dashboard />}>
