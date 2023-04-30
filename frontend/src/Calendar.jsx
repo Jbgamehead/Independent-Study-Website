@@ -394,30 +394,30 @@ export default class Demo extends React.PureComponent {
             Query.get('http://localhost:8081/getEmployee')
                 .then(res => {
                     if (res.data.Status === 'Success') {
-                        var { resources } = this.state
-
-                        if (resources[0].instances.length != 1) return
-
-                        var employees = res.data.Result
-
-                        var lock = getLock("people", 1)
-                        lock.total = employees.length
-
-                        for (var i = 0; i < employees.length; i++) {
-                            resources[0].instances = ([...resources[0].instances, {
-                                text: employees[i].name,
-                                id: employees[i].id,
-                                color: allColors[i % allColors.length][0],
-                                colorName: allColors[i % allColors.length][1]
-                            }])
-
-                            // TODO: request information about the person
-                            queryEmployee(employees[i].id)
-
-                            lock.done += 1
-                        }
-
                         this.setState((state) => {
+                            var { resources } = this.state
+
+                            if (resources[0].instances.length != 1) return
+
+                            var employees = res.data.Result
+
+                            var lock = getLock("people", 1)
+                            lock.total = employees.length
+
+                            for (var i = 0; i < employees.length; i++) {
+                                resources[0].instances = ([...resources[0].instances, {
+                                    text: employees[i].name,
+                                    id: employees[i].id,
+                                    color: allColors[i % allColors.length][0],
+                                    colorName: allColors[i % allColors.length][1]
+                                }])
+
+                                // TODO: request information about the person
+                                queryEmployee(employees[i].id)
+
+                                lock.done += 1
+                            }
+
                             return { resources, number: state.number + 1 }
                         })
 
@@ -433,37 +433,39 @@ export default class Demo extends React.PureComponent {
             Query.get('http://localhost:8081/calendar/admin/get')
                 .then(res => {
                     if (res.data.Status === 'Success') {
-                        var data = res.data.data
+                        this.setState((state) => {
+                            var data = res.data.data
 
-                        if (this.state.data.length != 0) return
+                            if (this.state.data.length != 0) return
 
-                        var lock = getLock("table", 1)
-                        if (data.length == 0) lock.done += 1
-                        lock.total = data.length
+                            var lock = getLock("table", 1)
+                            if (data.length == 0) lock.done += 1
+                            lock.total = data.length
 
-                        for (var i = 0; i < data.length; i++) {
-                            var entry = data[i]
+                            for (var i = 0; i < data.length; i++) {
+                                var entry = data[i]
 
-                            var sp = entry.Assignee.split(",")
-                            for (var i1 = 0; i1 < sp.length; i1++)
-                                sp[i1] = parseInt(sp[i1])
-                            if (sp.length == 0)
-                                sp = [-1, ...sp]
-                            var added = {
-                                title: entry.Event,
-                                startDate: new Date(entry.Start),
-                                endDate: new Date(entry.End),
-                                allDay: false,
-                                members: sp,
-                                roomId: entry.Location,
-                                notes: entry.Notes,
-                                owner: 1
+                                var sp = entry.Assignee.split(",")
+                                for (var i1 = 0; i1 < sp.length; i1++)
+                                    sp[i1] = parseInt(sp[i1])
+                                if (sp.length == 0)
+                                    sp = [-1, ...sp]
+                                var added = {
+                                    title: entry.Event,
+                                    startDate: new Date(entry.Start),
+                                    endDate: new Date(entry.End),
+                                    allDay: false,
+                                    members: sp,
+                                    roomId: entry.Location,
+                                    notes: entry.Notes,
+                                    owner: 1
+                                }
+                                this.commitChanges({ added: added, blockSync: true }, false)
+                                lock.done += 1
                             }
-                            this.commitChanges({ added: added, blockSync: true }, false)
-                            lock.done += 1
-                        }
 
-                        return res.data
+                            return res.data
+                        })
                     } else {
                         // TODO: display error
                         console.log(res)
