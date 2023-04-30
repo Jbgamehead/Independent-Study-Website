@@ -28,7 +28,7 @@ import EmployeeLogin from './EmployeeLogin'
 // dashboards
 import Dashhome from './Dashhome'
 import EmployeeDashboard from './EmployeeDashboard'
-
+import EmployeeProfile from './EmployeeProfile'
 function App() {
   return (
     <BrowserRouter>

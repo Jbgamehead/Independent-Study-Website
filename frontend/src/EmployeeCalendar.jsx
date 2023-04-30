@@ -30,7 +30,7 @@ import {
     AppointmentTooltip,
     GroupingPanel,
 } from '@devexpress/dx-react-scheduler-material-ui'
-import {indigo} from '@mui/material/colors'
+import { indigo } from '@mui/material/colors'
 
 const allColors = [[indigo, "indigo"]]
 
@@ -264,7 +264,7 @@ export default class Demo extends React.PureComponent {
             var members = this.state.resources[0].instances
             for (var i = 0; i < members.length; i++) if (members[i].id == member) return members[i].color[300]
             return indigo[300]
-        }, (st) => {this.setState(st)}, this.toggleTooltipVisibility, this.onAppointmentMetaChange, this.submitSuggestion)
+        }, (st) => { this.setState(st) }, this.toggleTooltipVisibility, this.onAppointmentMetaChange, this.submitSuggestion)
 
         return (
             <body>
@@ -299,14 +299,14 @@ export default class Demo extends React.PureComponent {
                         <IntegratedGrouping />
                         <GroupingPanel />
 
-                        <Appointments appointmentContentComponent={content}/>
+                        <Appointments appointmentContentComponent={content} />
                         <AppointmentTooltip
                             showCloseButton
 
                             visible={tooltipVisible}
                             appointmentMeta={appointmentMeta}
                             onVisibilityChange={this.toggleTooltipVisibility}
-                         />
+                        />
 
                         <Toolbar />
                         <ViewSwitcher />
