@@ -203,6 +203,7 @@ export default class Demo extends React.PureComponent {
                 data: {},
             },
         }
+        sentRequest = false
 
         this.commitChanges = this.commitChanges.bind(this)
         this.submitSuggestion = this.submitSuggestion.bind(this)
@@ -382,8 +383,8 @@ export default class Demo extends React.PureComponent {
         lastSent = []
         lastDeleted = []
 
-        if (this.state.firstRender) {
-            this.state.firstRender = false
+        if (!sentRequest) {
+            sentRequest = true
 
             /* run setup */
             getLock("people", 1)

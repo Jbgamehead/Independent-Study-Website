@@ -35,7 +35,6 @@ const owners = [{
 const owner = [{ text: "Schedule", id: 1 }]
 
 var lastChanged = []
-var sentRequest = false
 var unlocked = false
 var locks = {}
 
@@ -95,6 +94,7 @@ function parseDate(time) {
     return Time.from(entry(time, 1), entry(time, 2)) + (entry(time, 0) * Time.DAY_LEN)
 }
 
+var sentRequest = []
 export default class Demo extends React.PureComponent {
     constructor(props) {
         super(props);
@@ -112,6 +112,7 @@ export default class Demo extends React.PureComponent {
         };
 
         this.commitChanges = this.commitChanges.bind(this);
+        sentRequest = []
     }
 
     commitChanges({ added, changed, deleted, blockSync }) {
@@ -179,44 +180,44 @@ export default class Demo extends React.PureComponent {
     render() {
         const { data, resources, grouping } = this.state;
 
-        if (!sentRequest) {
-            sentRequest = true
+        if (sentRequest.length == 0) {
+             sentRequest = [true]
 
-            axios.post("http://localhost:8081/availability/get/" + id)
-                .then(res => {
-                    console.log(res)
-                    if (res.data.Status === 'Success') {
-                        var data = res.data.data
-                        console.log(data)
-                        if (data.length == 0) return
+             axios.post("http://localhost:8081/availability/get/" + id)
+                 .then(res => {
+                     console.log(res)
+                     if (res.data.Status === 'Success') {
+                         var data = res.data.data
+                         console.log(data)
+                         if (data.length == 0) return
 
-                        var entry = data[0]
-                        var openings = entry.Openings
-                        var endings = entry.Durations
+                         var entry = data[0]
+                         var openings = entry.Openings
+                         var endings = entry.Durations
 
-                        while (true) {
-                            if (!openings) break
+                         while (true) {
+                             if (!openings) break
 
-                            var opening = openings.substring(0, 6)
-                            openings = openings.substring(6)
-                            var closing = endings.substring(0, 6)
-                            endings = endings.substring(6)
+                             var opening = openings.substring(0, 6)
+                             openings = openings.substring(6)
+                             var closing = endings.substring(0, 6)
+                             endings = endings.substring(6)
 
-                            var start = new Date("Sun Jan 01 2023 00:00:00 GMT-0500 (Eastern Standard Time").getTime()
+                             var start = new Date("Sun Jan 01 2023 00:00:00 GMT-0500 (Eastern Standard Time").getTime()
 
-                            var startTime = parseDate(opening) + start
-                            var added = {
-                                    startDate: new Date(parseDate(opening) + start),
-                                    endDate: new Date(parseDate(closing) + start),
-                                    "allDay": false,
-                                    "owner": 1
-                            }
-                            console.log(added)
-                            this.commitChanges({ added, blockSync: true })
-                        }
-                    }
-                })
-                .catch(err => console.log(err))
+                             var startTime = parseDate(opening) + start
+                             var added = {
+                                     startDate: new Date(parseDate(opening) + start),
+                                     endDate: new Date(parseDate(closing) + start),
+                                     "allDay": false,
+                                     "owner": 1
+                             }
+                             console.log(added)
+                             this.commitChanges({ added, blockSync: true })
+                         }
+                     }
+                 })
+                 .catch(err => console.log(err))
         }
 
         return (
