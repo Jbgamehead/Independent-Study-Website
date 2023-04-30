@@ -106,7 +106,7 @@ function queryEmployee(data) {
                 var data = res.data.data
                 if (data.length == 0) return
 
-                var builder = provider.createPerson(data)
+                var builder = provider.createPerson(data[0].EmployeeId)
 
                 var entry = data[0]
                 var openings = entry.Openings

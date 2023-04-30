@@ -26,7 +26,7 @@ export class PersonBuilder {
 
     build() {
         var per = new Person.Person(this.id, this.openings)
-        people[name] = per
+        people[this.id] = per
         peopleList.push(per)
         return per
     }
@@ -57,12 +57,13 @@ var toRun = []
 
 export function addEvent(data, memberMapper) {
     toRun.push(() => {
+    console.log(memberMapper)
         for (var i = 0; i < data.members.length; i++) {
             var start = data.startDate
             var end = data.endDate
 
             var avg = (start.getTime() + end.getTime()) / 2
-            people[memberMapper(data.members[i])].schedule(avg)
+            people[data.members[i]].schedule(avg)
         }
     })
 }
@@ -74,7 +75,7 @@ export function removeEvent(data) {
             var end = data.endDate
 
             var avg = (start.getTime() + end.getTime()) / 2
-            people[memberMapper(data.members[i])].unschedule(avg)
+            people[data.members[i]].unschedule(avg)
         }
     })
 }
